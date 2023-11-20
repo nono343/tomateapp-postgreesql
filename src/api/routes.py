@@ -19,6 +19,11 @@ from flask import send_from_directory
 def hello_world():
     return "<p>Hello, World!</p>"
 
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+
+
+from flask_jwt_extended import create_access_token
+
 @api.route('/logintoken', methods=["POST"])
 def create_token():
     username = request.json.get("username", None)
@@ -28,11 +33,22 @@ def create_token():
     if user is None or not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Wrong username or password"}), 401
 
-    # Imprime el ID de usuario antes de crear el token
+    # Imprime información antes de crear el token
     print("User ID:", user.id)
+    print("Username:", user.username)
 
-    # Crea el token
-    access_token = create_access_token(identity=user.id, additional_claims={"isAdmin": user.isAdmin})
+    # Modifica la creación del token para incluir la ruta completa de la foto
+    foto_path = f"http://localhost:5000/uploads/{user.foto}" if user.foto else None
+
+    # Crea el token con información adicional en la carga útil
+    access_token = create_access_token(
+        identity=user.id,
+        additional_claims={
+            "username": user.username,
+            "isAdmin": user.isAdmin,
+            "foto": foto_path  # Cambia aquí para incluir la ruta completa
+        }
+    )
 
     # Imprime el token antes de devolverlo en la respuesta
     print("Access Token:", access_token)
@@ -40,16 +56,27 @@ def create_token():
     # Devuelve la respuesta con el token
     return jsonify({
         "id": user.id,
-        "username": username,
+        "username": user.username,
         "access_token": access_token,
-        "isAdmin": user.isAdmin
+        "isAdmin": user.isAdmin,
+        "foto": foto_path
     })
 
 @api.route("/signup", methods=["POST"])
 def signup():
-    data = request.json
-    username = data.get("username", None)
-    password = data.get("password", None)
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    username = request.form.get("username", None)
+    password = request.form.get("password", None)
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(os.path.abspath(api.config['UPLOAD_FOLDER']), filename))
 
     if not username or not password:
         return jsonify({"error": "Username and password are required"}), 400
@@ -59,14 +86,15 @@ def signup():
         return jsonify({"error": "Username already exists"}), 409
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-    new_user = User(username=username, password=hashed_password, isAdmin=data.get("isAdmin", "user"))
+    new_user = User(username=username, password=hashed_password, isAdmin=request.form.get("isAdmin", "user"), foto=filename)
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({
         "id": new_user.id,
         "username": new_user.username,
-        "isAdmin": new_user.isAdmin
+        "isAdmin": new_user.isAdmin,
+        "foto": new_user.foto
     })
  
  # Ruta para obtener la información de los usuarios
@@ -184,6 +212,46 @@ def get_categories():
 
     return jsonify(categories=category_list)
 
+@api.route('/categorias/<int:categoria_id>', methods=['GET'])
+def get_category_by_id(categoria_id):
+    try:
+        # Obtener la categoría por su ID
+        category = Categorias.query.get(categoria_id)
+
+        if category is None:
+            return jsonify({'error': 'Categoría no encontrada'}), 404
+
+        # Crear un diccionario con la información de la categoría
+        category_data = {
+            'id': category.id,
+            'nombreesp': category.nombreesp,
+            'nombreeng': category.nombreeng,
+            'foto': category.foto
+            # Puedes agregar más campos según tus necesidades
+        }
+
+        return jsonify(category=category_data), 200
+    except Exception as e:
+        # Manejo de errores
+        return jsonify({'error': str(e)}), 500
+
+@api.route('/categorias/<int:id>', methods=['DELETE'])
+def delete_categoria(id):
+    # Buscar la categoría por ID
+    categoria = Categorias.query.get(id)
+
+    if categoria is None:
+        return jsonify({'message': 'Categoría no encontrada'}), 404
+
+    try:
+        # Eliminar la categoría de la base de datos
+        db.session.delete(categoria)
+        db.session.commit()
+        return jsonify({'message': 'Categoría eliminada correctamente'}), 200
+    except Exception as e:
+        # En caso de error al eliminar, realiza un rollback y devuelve un mensaje de error
+        db.session.rollback()
+        return jsonify({'message': 'Error al eliminar la categoría', 'error': str(e)}), 500
 
 # Ruta para crear un nuevo producto
 @api.route('/upload_product', methods=['POST'])
@@ -229,8 +297,14 @@ def upload_product():
 @api.route('/productos', methods=['GET'])
 def get_products():
     try:
-        products = Productos.query.all()  # Consulta todos los productos en la base de datos
-        product_list = []
+        # Obtén el término de búsqueda del parámetro de consulta
+        search_term = request.args.get('nombre', '')
+
+        # Realiza la consulta filtrando por el nombre del producto
+        products = Productos.query.filter(Productos.nombreesp.ilike(f'%{search_term}%')).all()
+
+        # Resto del código para construir la respuesta (similar al anterior)
+        product_list = []  # Asegúrate de definir product_list
 
         for product in products:
             # Consulta los packagings asociados a cada producto
@@ -422,34 +496,44 @@ def get_packagings():
         return jsonify({'error': str(e)}), 500
 
 
-# Ruta para obtener todos los productos de una categoría
+# Ruta para buscar productos por nombre dentro de una categoría
 @api.route('/categorias/<int:categoria_id>/productos', methods=['GET'])
-def get_productos_por_categoria(categoria_id):
-    # Obtener la categoría
-    categoria = Categorias.query.get(categoria_id)
+def search_products_in_category(categoria_id):
+    try:
+        # Obtén el término de búsqueda del parámetro de consulta
+        search_term = request.args.get('nombre', '')
 
-    if categoria is None:
-        return jsonify({'error': 'Categoría no encontrada'}), 404
+        # Obtener la categoría
+        categoria = Categorias.query.get(categoria_id)
 
-    # Obtener los productos de la categoría
-    productos = Productos.query.filter_by(categoria_id=categoria.id).all()
+        if categoria is None:
+            return jsonify({'error': 'Categoría no encontrada'}), 404
 
-    # Crear una lista para almacenar la información de cada producto
-    productos_info = []
+        # Obtener los productos de la categoría filtrando por nombre
+        productos = Productos.query.filter(
+            Productos.categoria_id == categoria.id,
+            Productos.nombreesp.ilike(f'%{search_term}%')
+        ).all()
 
-    for producto in productos:
-        # Agregar información relevante del producto a la lista
-        producto_info = {
-            'id': producto.id,
-            'nombreesp': producto.nombreesp,
-            'nombreeng': producto.nombreeng,
-            'foto': producto.foto,
-            # Puedes agregar más campos según tus necesidades
-        }
-        productos_info.append(producto_info)
+        # Crear una lista para almacenar la información de cada producto
+        productos_info = []
 
-    # Devolver la lista de productos en formato JSON
-    return jsonify({'categoria': {'nombreesp': categoria.nombreesp, 'nombreeng': categoria.nombreeng}, 'productos': productos_info})
+        for producto in productos:
+            # Agregar información relevante del producto a la lista
+            producto_info = {
+                'id': producto.id,
+                'nombreesp': producto.nombreesp,
+                'nombreeng': producto.nombreeng,
+                'foto': producto.foto,
+                # Puedes agregar más campos según tus necesidades
+            }
+            productos_info.append(producto_info)
+
+        # Devolver la lista de productos en formato JSON
+        return jsonify({'categoria': {'nombreesp': categoria.nombreesp, 'nombreeng': categoria.nombreeng}, 'productos': productos_info})
+    except Exception as e:
+        # Manejo de errores
+        return jsonify({'error': str(e)}), 500
 
 # Ruta para obtener la información completa de un producto por su ID y categoría por su ID
 @api.route('/categorias/<int:categoria_id>/productos/<int:producto_id>', methods=['GET'])

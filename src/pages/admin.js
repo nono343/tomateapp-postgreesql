@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function Admin(props) {
-    
+
     const [profileData, setProfileData] = useState(null)
 
     useEffect(() => {
@@ -44,8 +44,8 @@ function Admin(props) {
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
-        axios.get("http://localhost:5000/categories", {
-     })
+        axios.get("http://localhost:5000/categorias", {
+        })
             .then((response) => {
                 setCategories(response.data.categories);
                 console.log('Respuesta del servidor:', response);
@@ -82,7 +82,7 @@ function Admin(props) {
                 });
                 if (response.status === 200) {
                     setUploadedFileNameCategory(response.data.message);
-                    axios.get('http://localhost:5000/categories')
+                    axios.get('http://localhost:5000/categorias')
                         .then((response) => {
                             setCategories(response.data.categories);
                         })
@@ -97,6 +97,21 @@ function Admin(props) {
             }
         }
     };
+
+
+    const handleDeleteCategory = async (id) => {
+        try {
+            // Realiza la solicitud DELETE al backend para eliminar la categoría
+            await axios.delete(`http://localhost:5000/categorias/${id}`);
+
+            // Actualiza la lista de categorías después de eliminar
+            const updatedCategories = categories.filter(category => category.id !== id);
+            setCategories(updatedCategories);
+        } catch (error) {
+            console.error('Error al eliminar la categoría:', error);
+        }
+    };
+
 
     const [mostrarFormularioCategorias, setMostrarFormularioCategorias] = useState(false);
 
@@ -398,7 +413,7 @@ function Admin(props) {
 
     return (
 
-        <div>
+        <div className='animate-fade-down'>
             <div className="sm:flex sm:justify-center mb-5 lg:hidden">
                 <div className="dropdown">
                     <label tabIndex={0} className="btn btn-ghost btn-circle">
@@ -465,14 +480,8 @@ function Admin(props) {
 
             {mostrarFormularioCategorias && (
 
-                <div>
-                    {/* {uploadedFileNameCategory &&
-                <div className="alert alert-success max-w-screen-sm mx-auto mb-10">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span>Categoria subida</span>
-                </div>
-              } */}
-                    <form className="grid md:grid-cols-3 gap-6 max-w-screen-xl mx-auto">
+                <div className='animate-flip-down'>
+                    <form className="grid md:grid-cols-3 gap-6 max-w-screen-xl mx-auto px-10 mb-5">
                         <div className="form-control w-full max-w-xs">
                             <label className="label" htmlFor="name_esp">
                                 <span className="label-text">Nombre categoría español</span>
@@ -495,7 +504,7 @@ function Admin(props) {
                         </div>
 
                         <div className='mx-auto md:col-start-2'>
-                            <button onClick={handleUploadCategory} type="button" className="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Crear Categoría</button>
+                            <button onClick={handleUploadCategory} type="button" className="btn btn-outline btn-success">Crear Categoría</button>
                         </div>
                     </form>
 
@@ -506,6 +515,8 @@ function Admin(props) {
                                     <th>Foto</th>
                                     <th>Nombre</th>
                                     <th>Nombre Inglés</th>
+                                    <th>Acciones</th> {/* Nueva columna para el botón de eliminar */}
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -523,9 +534,17 @@ function Admin(props) {
                                             )}
                                         </td>
                                         <td>
-                                            <strong>{category.nombreesp}</strong>
+                                            {category.nombreesp}
                                         </td>
                                         <td>{category.nombreeng}</td>
+                                        <td>
+                                            <button
+                                                onClick={() => handleDeleteCategory(category.id)}
+                                                className="btn btn-outline btn-error"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -537,13 +556,7 @@ function Admin(props) {
 
             {mostrarFormularioProductos && (
 
-                <div>
-                    {/* {uploadedFileNameCategory &&
-                <div className="alert alert-success max-w-screen-sm mx-auto mb-10">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span>Categoria subida</span>
-                </div>
-              } */}
+                <div className='animate-flip-down'>
                     <form className="grid md:grid-cols-3 gap-6 max-w-screen-xl mx-auto">
                         <div className="form-control w-full max-w-xs">
                             <label className="label" htmlFor="name_esp">

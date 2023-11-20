@@ -32,7 +32,8 @@ const DetalleProducto = (props) => {
     }, [categoria_id, producto_id]);
 
     if (!producto) {
-        return <div>Loading...</div>; // Puedes personalizar el indicador de carga
+        return <div><span className="loading loading-ring loading-lg"></span>
+        </div>; // Puedes personalizar el indicador de carga
     }
 
     console.log('Datos del producto:', producto);
@@ -64,7 +65,7 @@ const DetalleProducto = (props) => {
     };
 
     return (
-        <div className='max-w-screen-2xl mx-auto'>
+        <div className='max-w-screen-xl mx-auto'>
             {/* // Sección de información del producto */}
             <section className="text-gray-600 body-font">
                 <div className="container mx-auto flex px-5 md:flex-row flex-col items-center">
@@ -107,6 +108,8 @@ const DetalleProducto = (props) => {
                 </div>
             </section>
 
+            <div className="border-t mx-auto border-gray-200 bg-white py-5 sm:px-6 animate-fade-up">
+            </div>
             {/* Tabla de packagings */}
             <section>
                 <div className="relative overflow-x-auto shadow-md rounded-lg max-h-80 animate-fade-up">

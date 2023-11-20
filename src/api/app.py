@@ -8,7 +8,7 @@ from datetime import timedelta
 from models import db
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}  # Incluye la extensión 'webp'
 
 
 api = Flask(__name__)
