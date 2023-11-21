@@ -18,7 +18,7 @@ api.config["SECRET_KEY"] = "your_secret_key"  # Cambia esto por una clave segura
 api.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///flaskdb.db"
 api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# api.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+api.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(api)
 
 api.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
