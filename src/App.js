@@ -1,6 +1,5 @@
-// Importa las dependencias necesarias
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { jwtDecode as jwt_decode } from 'jwt-decode';
 
 // Importa los componentes y hooks necesarios
@@ -48,25 +47,26 @@ function App() {
       )}
 
       {/* Renderiza las rutas condicionalmente dependiendo de la existencia del token */}
-      {token ? (
-        <Routes>
-          {/* Specific routes */}
-          <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
-          <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
-          <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} />} />
+      <Routes>
+        {/* Rutas específicas */}
+        {token ? (
+          <>
+            <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
+            <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
+            <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} />} />
 
-          {/* Admin route */}
-          {isAdmin && (
-            <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />
-          )}
-        </Routes>
-      ) : (
-        // Default login route
-        <Routes>
-          <Route path='/' element={<Login setToken={setToken} token={token} />} />
-          <Route path='/register' element={<Register setToken={setToken} />} />
-        </Routes>
-      )}
+            {/* Ruta de administrador */}
+            {isAdmin && <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />}
+          </>
+        ) : (
+          // Ruta de inicio de sesión predeterminada
+          <Route path='/*' element={<Navigate to="/" />} />
+        )}
+
+        {/* Rutas de inicio de sesión y registro */}
+        <Route path='/' element={<Login setToken={setToken} token={token} />} />
+        <Route path='/register' element={<Register setToken={setToken} />} />
+      </Routes>
     </BrowserRouter>
   );
 }
