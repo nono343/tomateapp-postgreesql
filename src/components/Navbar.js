@@ -69,7 +69,7 @@ export const Navbar = (props) => {
                                     to={`/categorias/${category.id}`}
                                     className='font-bold'
                                 >
-                                    <li><a>{props.isSpanish ? category.nombreesp : category.nombreeng}</a></li>
+                                    <li><span>{props.isSpanish ? category.nombreesp : category.nombreeng}</span></li>
                                 </Link>
                             ))}
                         </ul>
@@ -99,20 +99,15 @@ export const Navbar = (props) => {
                             </summary>
                             <ul className="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52">
                                 {admin && (
-                                    <li>
-                                        <div onClick={() => navigate("/admin")} className="btn btn-accent">
+                                    <li onClick={() => navigate("/admin")} className="btn btn-accent">
                                             Admin
-                                        </div>
                                     </li>
                                 )}
-                                <li>
-                                    <div onClick={handleLogout} className="btn btn-error">
+                                <li onClick={handleLogout} className="btn btn-error">
                                         Logout
-                                    </div>
                                 </li>
                             </ul>
                         </details>
-
                     </div>
                 </div>
                 {/* Page content here */}
@@ -121,102 +116,15 @@ export const Navbar = (props) => {
                 <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
                 <ul className="menu p-4 w-50 min-h-full bg-base-300">
                     {categories.map((category) => (
-                        <Link
-                            key={category.id}
-                            to={`/categorias/${category.id}`}
-                            className='font-bold'
-
-                        >
-                            <li><a>{props.isSpanish ? category.nombreesp : category.nombreeng}</a></li>
-                        </Link>
+                        <li key={category.id}>
+                            <Link to={`/categorias/${category.id}`} className='font-bold'>
+                                <span>{props.isSpanish ? category.nombreesp : category.nombreeng}</span>
+                            </Link>
+                        </li>
                     ))}
-
                 </ul>
             </div>
         </div>
 
-
-        // <div className="navbar max-w-screen-xl mx-auto bg-base-100 animate-fade-down z-50 ">
-        //     <div className="navbar-start">
-        //         <div className="dropdown">
-        //             <label tabIndex={0} className="btn btn-ghost lg:hidden">
-        //                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
-        //             </label>
-        //             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-        //                 {categories.map((category) => (
-        //                     <Link
-        //                         key={category.id}
-        //                         to={`/categories/${category.id}`}
-        //                         className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-
-        //                     >
-        //                         <li>{props.isSpanish ? category.nombreesp : category.nombreeng}</li>
-        //                     </Link>
-        //                 ))}
-
-        //             </ul>
-        //         </div>
-        // <Link to="/inicio">
-        //     <img src={logo} className='w-25 h-10' />
-        // </Link>
-        //     </div>
-        //     <div className="navbar-center hidden lg:flex">
-        //         <ul className="menu menu-horizontal px-1">
-        // {categories.map((category) => (
-        //     <Link
-        //         key={category.id}
-        //         to={`/categorias/${category.id}`}
-        //         className="block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50 mx-1"
-
-        //     >
-        //         <li>{props.isSpanish ? category.nombreesp : category.nombreeng}</li>
-        //     </Link>
-        // ))}
-
-        //         </ul>
-        //     </div>
-        // <div className="ml-10 flex items-center">
-        //     <input
-        //         type="checkbox"
-        //         className="toggle toggle-success"
-        //         checked={isChecked}
-        //         onChange={toggleCheckbox}
-        //     />
-        //     <div className="ml-2">
-        //         <ReactCountryFlag
-        //             countryCode={isChecked ? "ES" : "GB"}
-        //             svg
-        //             className="fill-current rounded-full"
-        //             style={{
-        //                 width: '4em',
-        //                 height: '5em',
-        //             }}
-        //         />
-        //     </div>
-        // </div>
-
-        //     <div className="navbar-end z-50" 
-        //     >
-        // <details className="dropdown dropdown-end" >
-        //     <summary className="btn btn-ghost rounded-btn w-20">
-        //         <img src={foto} alt="User" />
-        //     </summary>
-        //     <ul className="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52">
-        //         {admin && (
-        //             <li>
-        //                 <div onClick={() => navigate("/admin")} className="btn btn-accent">
-        //                     Admin
-        //                 </div>
-        //             </li>
-        //         )}
-        //         <li>
-        //             <div onClick={handleLogout} className="btn btn-error">
-        //                 Logout
-        //             </div>
-        //         </li>
-        //     </ul>
-        // </details>
-        //     </div>
-        // </div>
     )
 }

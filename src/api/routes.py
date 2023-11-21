@@ -567,3 +567,35 @@ def get_product_info_by_category(categoria_id, producto_id):
     else:
         return jsonify({"error": "Categoría no encontrada"}), 404
 
+
+@api.route('/productos/editar_usuarios_packaging', methods=['POST'])
+def editar_usuarios_packaging():
+    try:
+        # Obtén los datos del formulario enviado
+        data = request.json  # Asegúrate de que el frontend esté enviando datos en formato JSON
+
+        # Extrae los datos necesarios del formulario
+        packaging_id = data.get('packaging_id')
+        nuevos_usuarios = data.get('nuevos_usuarios')  # Una lista de nuevos usuarios
+
+        # Realiza la actualización en la base de datos
+        packaging = Packaging.query.get(packaging_id)
+        if packaging:
+            # Elimina los usuarios existentes asociados al packaging
+            packaging.users.clear()
+
+            # Agrega los nuevos usuarios al packaging
+            for usuario in nuevos_usuarios:
+                user = User.query.filter_by(username=usuario).first()
+                if user:
+                    packaging.users.append(user)
+
+            db.session.commit()
+
+            return jsonify({'message': 'Usuarios del packaging actualizados exitosamente'}), 200
+        else:
+            return jsonify({'error': 'Packaging no encontrado'}), 404
+
+    except Exception as e:
+        # Manejo de errores
+        return jsonify({'error': str(e)}), 500

@@ -21,7 +21,7 @@ function useToken() {
   }
 
   useEffect(() => {
-    const expirationTime = 60 * 1000; // 1 minuto en milisegundos
+    const expirationTime = 60 * 60 * 1000; // 1 minuto en milisegundos
     const timeoutId = setTimeout(() => {
       removeToken();
     }, expirationTime);
