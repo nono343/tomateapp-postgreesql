@@ -17,7 +17,6 @@ function Login(props) {
         if (token) {
             navigate('/inicio');
         }
-        console.log(token)
     }, [navigate, props]);
 
     function btnlogin(event) {

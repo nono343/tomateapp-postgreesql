@@ -34,7 +34,7 @@ function Register() {
                 console.log(response);
                 const { id, username, isAdmin } = response.data;
                 alert("Successfully Registered");
-                navigate('/login');
+                navigate('/');
             })
             .catch((error) => {
                 console.error(error);

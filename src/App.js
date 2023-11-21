@@ -26,7 +26,7 @@ function App() {
 
   // Imprime el token decodificado
   if (decodedToken) {
-    // console.log('Decoded Token:', decodedToken);
+    console.log('Decoded Token:', decodedToken);
   }
 
   const [isSpanish, setIsSpanish] = useState(true);
@@ -34,9 +34,6 @@ function App() {
   const handleLogout = () => {
     removeToken();
   };
-
-
-  console.log(token)
 
   // Renderiza el componente Navbar solo si existe un token válido
   return (
@@ -48,36 +45,27 @@ function App() {
           isSpanish={isSpanish}
           setIsSpanish={setIsSpanish}
           onLogout={handleLogout}
-
-
         />
       )}
-      {/* <ProductSearch token={token} setToken={setToken} /> */}
       {/* Renderiza las rutas condicionalmente dependiendo de la existencia del token */}
       <Routes>
+        {/* Specific routes first, more general routes later */}
+        <Route path='/register' element={<Register setToken={setToken} />} />
+        <Route
+          path='/inicio'
+          element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />}
+        />
+        <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
+        <Route
+          path='/categorias/:categoria_id/productos/:producto_id'
+          element={<DetalleProducto token={token} setToken={setToken} />}
+        />
+        {isAdmin && (
+          <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />
+        )}
+        {/* Default login route */}
         <Route path='/' element={<Login setToken={setToken} token={token} />} />
       </Routes>
-
-      {(!token || token === '' || token === undefined) ? (
-        <Routes>
-          <Route path='/register' element={<Register setToken={setToken} />} />
-        </Routes>
-      ) : (
-        <Routes>
-          <Route
-            path='/inicio'
-            element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />}
-          />
-          <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
-          <Route
-            path='/categorias/:categoria_id/productos/:producto_id'
-            element={<DetalleProducto token={token} setToken={setToken} />}
-          />
-          {isAdmin && (
-            <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />
-          )}
-        </Routes>
-      )}
     </BrowserRouter>
   );
 }
