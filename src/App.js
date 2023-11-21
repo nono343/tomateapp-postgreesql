@@ -13,7 +13,6 @@ import Inicio from './pages/inicio';
 import DetalleProducto from './pages/productos';
 import { Navbar } from './components/Navbar';
 
-// Función principal del componente App
 function App() {
   // Obtiene el token y las funciones relacionadas con el token usando el hook useToken
   const { token, removeToken, setToken } = useToken();
@@ -47,28 +46,29 @@ function App() {
           onLogout={handleLogout}
         />
       )}
+
       {/* Renderiza las rutas condicionalmente dependiendo de la existencia del token */}
-      <Routes>
-        {/* Specific routes first, more general routes later */}
-        <Route path='/register' element={<Register setToken={setToken} />} />
-        <Route
-          path='/inicio'
-          element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />}
-        />
-        <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
-        <Route
-          path='/categorias/:categoria_id/productos/:producto_id'
-          element={<DetalleProducto token={token} setToken={setToken} />}
-        />
-        {isAdmin && (
-          <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />
-        )}
-        {/* Default login route */}
-        <Route path='/' element={<Login setToken={setToken} token={token} />} />
-      </Routes>
+      {token ? (
+        <Routes>
+          {/* Specific routes */}
+          <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
+          <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
+          <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} />} />
+
+          {/* Admin route */}
+          {isAdmin && (
+            <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />
+          )}
+        </Routes>
+      ) : (
+        // Default login route
+        <Routes>
+          <Route path='/' element={<Login setToken={setToken} token={token} />} />
+          <Route path='/register' element={<Register setToken={setToken} />} />
+        </Routes>
+      )}
     </BrowserRouter>
   );
 }
 
-// Exporta el componente App
 export default App;
