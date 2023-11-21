@@ -35,7 +35,7 @@ const ProductSearch = ({ onSearch, onSearchComplete, isSpanish }) => {
     };
 
     return (
-        <div className='relative py-5 px-10 animate-fade-down'>
+        <div className=' py-5 px-10'>
             <div className="form-control w-full max-w-sm mx-auto">
                 <input
                     type="text"

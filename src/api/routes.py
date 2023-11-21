@@ -212,6 +212,9 @@ def get_categories():
 
     return jsonify(categories=category_list)
 
+
+
+
 @api.route('/categorias/<int:categoria_id>', methods=['GET'])
 def get_category_by_id(categoria_id):
     try:

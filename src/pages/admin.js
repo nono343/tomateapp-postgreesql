@@ -113,14 +113,21 @@ function Admin(props) {
     };
 
 
+
+
     const [mostrarFormularioCategorias, setMostrarFormularioCategorias] = useState(false);
 
     const toggleFormularioCategorias = () => {
         setMostrarFormularioCategorias(!mostrarFormularioCategorias);
         setMostrarFormularioProductos(false);
+        setMostrarFormularioPackaging(false);
+
 
 
     };
+
+
+
 
 
 
@@ -211,6 +218,8 @@ function Admin(props) {
 
         // Cerrar siempre mostrarFormularioCategorias al abrir mostrarFormularioProductos
         setMostrarFormularioCategorias(false);
+        setMostrarFormularioPackaging(false);
+
     };
 
     //subir meses 
@@ -480,8 +489,8 @@ function Admin(props) {
 
             {mostrarFormularioCategorias && (
 
-                <div className='animate-flip-down'>
-                    <form className="grid md:grid-cols-3 gap-6 max-w-screen-xl mx-auto px-10 mb-5">
+                <div className='animate-flip-down max-w-screen-xl mx-auto px-10 gap-6'>
+                    <form className="grid md:grid-cols-3 mb-5">
                         <div className="form-control w-full max-w-xs">
                             <label className="label" htmlFor="name_esp">
                                 <span className="label-text">Nombre categoría español</span>
@@ -503,41 +512,43 @@ function Admin(props) {
                             <input type="file" className="file-input file-input-bordered w-full max-w-xs" onChange={handleFileChangeCategory} required />
                         </div>
 
-                        <div className='mx-auto md:col-start-2'>
+                        <div className='mx-auto md:col-start-2 mt-5'>
                             <button onClick={handleUploadCategory} type="button" className="btn btn-outline btn-success">Crear Categoría</button>
                         </div>
                     </form>
 
-                    <div className="max-w-screen-xl mx-auto overflow-x-auto">
-                        <table className="table">
+                    <div className="overflow-x-auto mt-5">
+                        <table className="table overflow-x-auto">
                             <thead>
                                 <tr>
-                                    <th>Foto</th>
-                                    <th>Nombre</th>
-                                    <th>Nombre Inglés</th>
-                                    <th>Acciones</th> {/* Nueva columna para el botón de eliminar */}
+                                    <th className="sm:w-1/4">Foto</th>
+                                    <th className="sm:w-1/4">Nombre</th>
+                                    <th className="sm:w-1/4">Nombre Inglés</th>
+                                    <th className="sm:w-1/4">Acciones</th> {/* Nueva columna para el botón de eliminar */}
 
                                 </tr>
                             </thead>
                             <tbody>
-                                {categories.map(category => (
+                                {categories.map((category) => (
                                     <tr key={category.id}>
-                                        <td>
+                                        <td className="sm:w-1/4">
                                             {category.foto && (
                                                 <div className="flex items-center gap-3">
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
-                                                            <img src={`http://localhost:5000/uploads/${category.foto}`} alt={category.nombreesp} />
+                                                            <img
+                                                                src={`http://localhost:5000/uploads/${category.foto}`}
+                                                                alt={category.nombreesp}
+                                                                className="max-w-full h-auto"
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>
                                             )}
                                         </td>
-                                        <td>
-                                            {category.nombreesp}
-                                        </td>
-                                        <td>{category.nombreeng}</td>
-                                        <td>
+                                        <td className="sm:w-1/4">{category.nombreesp}</td>
+                                        <td className="sm:w-1/4">{category.nombreeng}</td>
+                                        <td className="sm:w-1/4">
                                             <button
                                                 onClick={() => handleDeleteCategory(category.id)}
                                                 className="btn btn-outline btn-error"
@@ -551,13 +562,12 @@ function Admin(props) {
                         </table>
                     </div>
                 </div>
-
             )}
 
             {mostrarFormularioProductos && (
 
-                <div className='animate-flip-down'>
-                    <form className="grid md:grid-cols-3 gap-6 max-w-screen-xl mx-auto">
+                <div className='animate-flip-down max-w-screen-xl mx-auto gap-6 px-10 '>
+                    <form className="grid md:grid-cols-3">
                         <div className="form-control w-full max-w-xs">
                             <label className="label" htmlFor="name_esp">
                                 <span className="label-text">Nombre producto español</span>
@@ -612,12 +622,13 @@ function Admin(props) {
                         </div>
 
 
-                        <div className='mx-auto md:col-start-2'>
+                        <div className='mx-auto md:col-start-2 mb-5 mt-5'>
                             <button onClick={handleUploadProduct} type="button" className="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Crear Producto</button>
                         </div>
                     </form>
+
                     {/* agregar meses */}
-                    <form className="grid md:grid-cols gap-6 max-w-screen-xl mx-auto">
+                    <form className="grid grid-cols-1 mb-5">
                         <div>
                             <label htmlFor="first_name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombre producto español</label>
                             <select
@@ -634,39 +645,38 @@ function Admin(props) {
                             </select>
                         </div>
 
-                        <div className='max-w-screen-md'>
-                            <label htmlFor="monthSelector" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                Meses de producción:
-                            </label>
+                        <label htmlFor="monthSelector" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white mt-2">
+                            Meses de producción:
+                        </label>
 
-                            <ul className="flex items-center text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
-                                    <li key={month} className="w-full border-r last:border-r-0 border-gray-200 dark:border-gray-600">
-                                        <div className="flex items-center ps-3">
-                                            <input
-                                                id={`month-${month}`}
-                                                type="checkbox"
-                                                value={month}
-                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                                                checked={selectedMonths.includes(month)}
-                                                onChange={() => handleCheckboxChange(month)}
-                                            />
-                                            <label
-                                                htmlFor={`month-${month}`}
-                                                className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                                            >{`${month}`}</label>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        <ul className="grid grid-cols-4 lg:grid-cols-4 gap-4 items-center text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => (
+                                <li key={month} className="w-full lg:w-auto border-r last:border-r-0 border-gray-200 dark:border-gray-600">
+                                    <div className="flex items-center ps-3">
+                                        <input
+                                            id={`month-${month}`}
+                                            type="checkbox"
+                                            value={month}
+                                            className="checkbox"
+                                            checked={selectedMonths.includes(month)}
+                                            onChange={() => handleCheckboxChange(month)}
+                                        />
+                                        <label
+                                            htmlFor={`month-${month}`}
+                                            className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                        >{`${month}`}</label>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
                     </form>
+
                     <div className='flex justify-center mt-5'>
                         <button onClick={handleAgregarMeses} type="button" className="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 mb-5">Añadir meses</button>
                     </div>
 
 
-                    <div className="max-w-screen-xl mx-auto overflow-x-auto">
+                    <div className="overflow-x-auto mt-5">
                         <table className="table">
                             {/* head */}
                             <thead>
@@ -723,8 +733,8 @@ function Admin(props) {
 
             {mostrarFormularioPackaging && (
 
-                <div>
-                    <form className="grid md:grid-cols-3 gap-6 max-w-screen-xl mx-auto">
+                <div className='animate-flip-down max-w-screen-xl'>
+                    <form className="grid md:grid-cols-3 gap-6 mx-auto px-10 mb-5">
                         <div className="form-control w-full max-w-xs">
                             <label className="label" htmlFor="name_esp">
                                 <span className="label-text">Nombre Packaging Español</span>
@@ -831,14 +841,15 @@ function Admin(props) {
                                 <ul style={{ listStyle: 'none', padding: 0 }}>
                                     {availableUsers.map((user) => (
                                         <li key={user.id} style={{ display: 'inline-block', marginRight: '10px' }}>
-                                            <label>
+                                            <label className="cursor-pointer label">
                                                 <input
                                                     type="checkbox"
                                                     value={user.id}
                                                     onChange={() => handlePackagingCheckboxChange(user.id, 'user')}
                                                     checked={userIds.includes(String(user.id))} // Convertir a cadena para la comparación
+                                                    className="checkbox checkbox-success"
                                                 />
-                                                {user.username}
+                                                <span className="label-text ml-2">{user.username}</span>
                                             </label>
                                         </li>
                                     ))}
