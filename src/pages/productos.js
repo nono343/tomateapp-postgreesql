@@ -18,6 +18,11 @@ const DetalleProducto = (props) => {
     const decodedToken = token ? jwt_decode(token) : null;
 
     useEffect(() => {
+        console.log('isSpanish changed:', props.isSpanish);
+    }, [props.isSpanish]);
+
+
+    useEffect(() => {
         const fetchProductoPorId = async () => {
             try {
                 const response = await axios.get(`http://localhost:5000/categorias/${categoria_id}/productos/${producto_id}`);
@@ -64,8 +69,10 @@ const DetalleProducto = (props) => {
         setIsImageEnlarged(false);
     };
 
+
+
     return (
-        <div className='max-w-screen-xl mx-auto'>
+        <div className='max-w-screen-2xl mx-auto'>
             {/* // Sección de información del producto */}
             <section className="text-gray-600 body-font">
                 <div className="container mx-auto flex px-5 md:flex-row flex-col items-center">
@@ -79,9 +86,13 @@ const DetalleProducto = (props) => {
 
                     <div className="lg:flex-grow md:w-1/2 lg:pl-24 md:pl-16 flex flex-col md:items-start md:text-left items-center text-center animate-fade-left">
                         <h1 className="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-900">
-                            {producto.producto.nombreesp || ''}
+                            {props.isSpanish ? producto.producto.nombreesp : producto.producto.nombreeng}
                         </h1>
-                        <p className="mb-8 leading-relaxed">{producto.producto.descripcionesp || ''}</p>
+                        {(props.isSpanish ? producto.producto.descripcionesp : producto.producto.descripcioneng).split(/\n/).map((paragraph, index) => (
+                            <p key={index} className="mb-2 leading-relaxed">
+                                {paragraph}
+                            </p>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -90,7 +101,7 @@ const DetalleProducto = (props) => {
             <section>
                 <div className="border-t mx-auto border-gray-200 bg-white px-10 py-10 sm:px-6 animate-fade-up">
                     <h1 className="sm:text-3xl text-center text-2xl mb-5">
-                        Calendario de producción
+                        {props.isSpanish ? "Calendario de producción" : "Production Calendar"}
                     </h1>
                     <div className="flex justify-center max-w-screen-md mx-auto">
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((mes, index) => (
@@ -117,42 +128,43 @@ const DetalleProducto = (props) => {
                         <thead className="text-xs cursor-pointer text-white uppercase bg-gray-50">
                             <tr>
                                 <th scope="col" className="sticky left-0 top-0 z-10 w-1/20 px-4 sm:px-6 py-3 bg-red-600" onClick={() => handleSort('Packaging')}>
-                                    Embalaje
+                                    {props.isSpanish ? "Embalaje" : "Packaging"}
                                 </th>
                                 {/* Resto de las columnas */}
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600" onClick={() => handleSort('Presentation')}>
-                                    Formato
+                                    {props.isSpanish ? "Unidades" : "Presentation"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Calibre
+                                    {props.isSpanish ? "Calibre" : "Calibre"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Peso Presentación (g)
+                                    {props.isSpanish ? "Peso Presentación (g)" : "Format Weight (g)"}
                                 </th>
                                 {/* Agregar títulos para todos los campos de packaging */}
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Peso Neto (kg)
+                                    {props.isSpanish ? "Peso Neto (kg)" : "Net Weight (kg)"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Tamaño Caja
+                                    {props.isSpanish ? "Tamaño Caja" : "Box Size"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Pallet 80x120
+                                    {props.isSpanish ? "Pallet 80x120" : "Pallet 80x120"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Peso Neto Pallet 80x120 (kg)
+                                    {props.isSpanish ? "Peso Neto Pallet 80x120 (kg)" : "Net Weight Pallet 80x120 (kg)"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Pallet 100x120
+                                    {props.isSpanish ? "Pallet 100x120" : "Pallet 100x120"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Peso Neto Pallet 100x120 (kg)
+                                    {props.isSpanish ? "Peso Neto Pallet 100x120 (kg)" : "Net Weight Pallet 100x120 (kg)"}
                                 </th>
                                 <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    Foto
+                                    {props.isSpanish ? "Foto" : "Photo"}
                                 </th>
                             </tr>
                         </thead>
+
                         <tbody className="divide-y divide-gray-200">
                             {producto.packagings ? (
                                 producto.packagings

@@ -236,7 +236,9 @@ def get_category_by_id(categoria_id):
         return jsonify(category=category_data), 200
     except Exception as e:
         # Manejo de errores
-        return jsonify({'error': str(e)}), 500
+        print(f"Error: {str(e)}")
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
 
 @api.route('/categorias/<int:id>', methods=['DELETE'])
 def delete_categoria(id):
@@ -326,6 +328,7 @@ def get_products():
                     'nombreesp': packaging.nombreesp,
                     'nombreeng': packaging.nombreeng,
                     'presentacion': packaging.presentacion,
+                    'calibre': packaging.calibre,
                     'peso_presentacion_g': packaging.peso_presentacion_g,
                     'peso_neto_kg': packaging.peso_neto_kg,
                     'tamano_caja': packaging.tamano_caja,
@@ -567,35 +570,66 @@ def get_product_info_by_category(categoria_id, producto_id):
     else:
         return jsonify({"error": "Categoría no encontrada"}), 404
 
-
-@api.route('/productos/editar_usuarios_packaging', methods=['POST'])
-def editar_usuarios_packaging():
+# Ruta para editar usuarios asociados a un packaging
+@api.route('/packagings/<int:packaging_id>/edit_users', methods=['PUT'])
+def edit_packaging_users(packaging_id):
     try:
-        # Obtén los datos del formulario enviado
-        data = request.json  # Asegúrate de que el frontend esté enviando datos en formato JSON
+        # Obtener el packaging por su ID
+        packaging = Packagings.query.get(packaging_id)
 
-        # Extrae los datos necesarios del formulario
-        packaging_id = data.get('packaging_id')
-        nuevos_usuarios = data.get('nuevos_usuarios')  # Una lista de nuevos usuarios
+        # Verificar si el packaging existe
+        if not packaging:
+            return jsonify({'error': 'Packaging no encontrado'}), 404
 
-        # Realiza la actualización en la base de datos
-        packaging = Packaging.query.get(packaging_id)
-        if packaging:
-            # Elimina los usuarios existentes asociados al packaging
-            packaging.users.clear()
+        # Obtener datos de la solicitud JSON
+        data = request.json
 
-            # Agrega los nuevos usuarios al packaging
-            for usuario in nuevos_usuarios:
-                user = User.query.filter_by(username=usuario).first()
+        # Verificar si se proporciona la lista de usuarios para actualizar
+        if 'users' in data:
+            new_users = data['users']
+
+            # Limpiar la lista actual de usuarios asociados al packaging
+            for existing_user in packaging.users:
+                packaging.users.remove(existing_user)
+
+            # Agregar nuevos usuarios al packaging
+            for user_id in new_users:
+                user = User.query.get(user_id)
+
+                # Verificar si el usuario existe
                 if user:
                     packaging.users.append(user)
+                else:
+                    return jsonify({'error': f'Usuario con ID {user_id} no encontrado'}), 404
 
+            # Guardar los cambios en la base de datos
             db.session.commit()
 
             return jsonify({'message': 'Usuarios del packaging actualizados exitosamente'}), 200
         else:
+            return jsonify({'error': 'Se requiere la lista de usuarios para actualizar'}), 400
+
+    except Exception as e:
+        # Manejo de errores
+        print(f'Error en la ruta edit_packaging_users: {e}')
+        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+# Nueva ruta para eliminar packagings
+@api.route('/productos/packagings/<int:packaging_id>', methods=['DELETE'])
+def delete_packaging(packaging_id):
+    try:
+        # Busca el packaging por ID
+        packaging = Packagings.query.get(packaging_id)
+
+        if packaging is None:
             return jsonify({'error': 'Packaging no encontrado'}), 404
 
+        # Elimina el packaging de la base de datos
+        db.session.delete(packaging)
+        db.session.commit()
+
+        return jsonify({'message': 'Packaging eliminado correctamente'}), 200
     except Exception as e:
         # Manejo de errores
         return jsonify({'error': str(e)}), 500

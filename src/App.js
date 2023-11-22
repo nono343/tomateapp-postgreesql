@@ -11,6 +11,7 @@ import Categorias from './pages/categorias';
 import Inicio from './pages/inicio';
 import DetalleProducto from './pages/productos';
 import { Navbar } from './components/Navbar';
+import PackagingTable from './pages/PackagingTable';
 
 function App() {
   // Obtiene el token y las funciones relacionadas con el token usando el hook useToken
@@ -51,10 +52,10 @@ function App() {
         {/* Rutas específicas */}
         {token ? (
           <>
-            <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
-            <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} setIsSpanish={setIsSpanish} />} />
-            <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} />} />
-
+            <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish}  />} />
+            <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish}  />} />
+            <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} isSpanish={isSpanish}/>} />
+            <Route path='/packaging' element={<PackagingTable />} />
             {/* Ruta de administrador */}
             {isAdmin && <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />}
           </>

@@ -61,7 +61,7 @@ export const Navbar = (props) => {
                             <img src={logo} className='w-25 h-10' />
                         </Link>
                     </div>
-                    <div className="flex-none hidden lg:block">
+                    <div className="flex-none hidden lg:block mr-20">
                         <ul className="menu menu-horizontal">
                             {categories.map((category) => (
                                 <Link
