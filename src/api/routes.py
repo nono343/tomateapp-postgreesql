@@ -263,11 +263,13 @@ def delete_categoria(id):
 def upload_product():
     try:
         if 'file' not in request.files:
-            return jsonify({'error': 'No file part'}), 400
+            return jsonify({'error': 'At least one file is required'}), 400
 
         file = request.files['file']
+        file2 = request.files.get('file2')  # Use get to allow file2 to be None
+
         if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
+            return jsonify({'error': 'No selected file for the first photo'}), 400
 
         nombreesp = request.form['nombreesp']
         nombreeng = request.form['nombreeng']
@@ -277,6 +279,12 @@ def upload_product():
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            filename2 = None
+
+            if file2 and allowed_file(file2.filename):
+                filename2 = secure_filename(file2.filename)
+                file2.save(os.path.join(api.config['UPLOAD_FOLDER'], filename2))
+
             file.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
 
             nuevo_producto = Productos(
@@ -286,6 +294,7 @@ def upload_product():
                 descripcioneng=descripcioneng,
                 categoria_id=categoria_id,
                 foto=filename,
+                foto2=filename2,
             )
 
             db.session.add(nuevo_producto)
@@ -351,6 +360,7 @@ def get_products():
                 'descripcioneng': product.descripcioneng,
                 'categoria_id': product.categoria_id,
                 'foto': product.foto,
+                'foto2': product.foto2,
                 'packagings': packaging_list,
                 'meses_de_produccion': meses_de_produccion,
             }

@@ -123,6 +123,7 @@ function Admin(props) {
     //subir productos
 
     const [selectedFileProduct, setSelectedFileProduct] = useState(null);
+    const [selectedFileProduct2, setSelectedFileProduct2] = useState(null); // Added for the second file
     const [uploadedFileNameProduct, setUploadedFileNameProduct] = useState('');
     const [nombreEspProduct, setNombreEspProduct] = useState('');
     const [nombreEngProduct, setNombreEngProduct] = useState('');
@@ -132,7 +133,7 @@ function Admin(props) {
     const [products, setProducts] = useState([]);
 
     useEffect(() => {
-        // Fetch products when component mounts
+        // Fetch products when the component mounts
         axios.get('http://localhost:5000/productos')
             .then(response => setProducts(response.data.products))
             .catch(error => console.error('Error al obtener la lista de productos:', error));
@@ -140,6 +141,10 @@ function Admin(props) {
 
     const handleFileChangeProduct = (event) => {
         setSelectedFileProduct(event.target.files[0]);
+    };
+
+    const handleFileChangeProduct2 = (event) => {
+        setSelectedFileProduct2(event.target.files[0]);
     };
 
     const handleNombreEspChangeProduct = (event) => {
@@ -166,6 +171,7 @@ function Admin(props) {
         if (selectedFileProduct && nombreEspProduct && nombreEngProduct && categoryId) {
             const formData = new FormData();
             formData.append('file', selectedFileProduct);
+            formData.append('file2', selectedFileProduct2); // Append the second file
             formData.append('nombreesp', nombreEspProduct);
             formData.append('nombreeng', nombreEngProduct);
             formData.append('descripcionesp', descripcionEsp);
@@ -182,17 +188,9 @@ function Admin(props) {
                 if (response.status === 200) {
                     setUploadedFileNameProduct(response.data.message);
 
-                    // Fetch the updated list of products right after successful upload
-                    axios.get('http://localhost:5000/productos')
-                        .then((response) => {
-                            setProducts(response.data.products);
-                        })
-                        .catch((error) => {
-                            console.error('Error al obtener los productos después de cargar', error);
-                        });
+                    // Fetch the updated list of products right after a successful upload
                     const updatedProductsResponse = await axios.get('http://localhost:5000/productos');
-                    setAvailableProducts(updatedProductsResponse.data.products || []);
-                    setActualizacionProductos(true);
+                    setProducts(updatedProductsResponse.data.products || []);
                 } else {
                     console.error('Error al cargar el producto con foto');
                 }
@@ -202,6 +200,7 @@ function Admin(props) {
             }
         }
     };
+
 
     const [mostrarFormularioProductos, setMostrarFormularioProductos] = useState(false);
 
@@ -670,9 +669,15 @@ function Admin(props) {
                         <div className="form-control w-full max-w-xs">
                             <input type="file" className="file-input file-input-bordered w-full max-w-xs" onChange={handleFileChangeProduct} required />
                         </div>
+                     
+                        <div className="form-control w-full max-w-xs">
+                            <input type="file" className="file-input file-input-bordered w-full max-w-xs" onChange={handleFileChangeProduct2} required />
+                        </div>
+                     
                         <div className='mx-auto md:col-start-2 mb-5 mt-5'>
                             <button onClick={handleUploadProduct} type="button" className="btn btn-outline btn-success">Crear Producto</button>
                         </div>
+                        
                     </form>
                     {/* agregar meses */}
                     <form className="grid grid-cols-1 mb-5">
@@ -723,6 +728,7 @@ function Admin(props) {
                             <thead>
                                 <tr>
                                     <th>Foto</th>
+                                    <th>Foto2</th>
                                     <th>Nombre</th>
                                     <th className="hidden md:table-cell">Nombre Inglés</th>
                                     <th className="hidden md:table-cell">Descripción</th>
@@ -739,6 +745,17 @@ function Admin(props) {
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
                                                             <img src={`http://localhost:5000/uploads/${product.foto}`} alt={product.nombreesp} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {product.foto2 && (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="avatar">
+                                                        <div className="mask mask-squircle w-12 h-12">
+                                                            <img src={`http://localhost:5000/uploads/${product.foto2}`} alt={product.nombreesp} />
                                                         </div>
                                                     </div>
                                                 </div>

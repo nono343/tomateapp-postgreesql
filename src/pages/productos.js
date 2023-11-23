@@ -77,11 +77,31 @@ const DetalleProducto = (props) => {
             <section className="text-gray-600 body-font">
                 <div className="container mx-auto flex px-5 md:flex-row flex-col items-center">
                     <div className="lg:max-w-lg lg:w-full md:w-1/2 w-5/6 mb-10 md:mb-0 animate-fade-right">
-                        <img
-                            src={`http://localhost:5000/uploads/${producto.producto.foto || ''}`}
-                            alt={producto.producto.nombreesp || ''}
-                            className="h-full w-full object-cover"
-                        />
+                        <div className="carousel w-full">
+                            <div id="item1" className="carousel-item w-full">
+                                <img src={`http://localhost:5000/uploads/${producto.producto.foto || ''}`}
+                                    alt={producto.producto.nombreesp || ''}
+                                    className="h-full w-full object-cover" />
+                            </div>
+                            <div id="item2" className="carousel-item w-full">
+                                <img src={`http://localhost:5000/uploads/${producto.producto.foto2 || ''}`}
+                                    alt={producto.producto.nombreesp || ''}
+                                    className="h-full w-full object-cover" />
+                            </div>
+                            <div id="item3" className="carousel-item w-full">
+                                <img src="/images/stock/photo-1414694762283-acccc27bca85.jpg" className="w-full" />
+                            </div>
+                            <div id="item4" className="carousel-item w-full">
+                                <img src="/images/stock/photo-1665553365602-b2fb8e5d1707.jpg" className="w-full" />
+                            </div>
+                        </div>
+                        <div className="flex justify-center w-full py-2 gap-2">
+                            <a href="#item1" className="btn btn-xs">1</a>
+                            <a href="#item2" className="btn btn-xs">2</a>
+                            <a href="#item3" className="btn btn-xs">3</a>
+                            <a href="#item4" className="btn btn-xs">4</a>
+                        </div>
+
                     </div>
 
                     <div className="lg:flex-grow md:w-1/2 lg:pl-24 md:pl-16 flex flex-col md:items-start md:text-left items-center text-center animate-fade-left">

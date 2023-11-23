@@ -69,16 +69,18 @@ class Productos(db.Model):
     descripcioneng = db.Column(db.Text, nullable=False)
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
     foto = db.Column(db.String(120), nullable=False)
+    foto2 = db.Column(db.String(120), nullable=True)
     meses_produccion = db.relationship('MesesProduccion', backref='producto', cascade='all, delete-orphan')
     packagings = db.relationship('Packagings', backref='producto', cascade='all, delete-orphan')
 
-    def __init__(self, nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, foto):
+    def __init__(self, nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, foto, foto2):
         self.nombreesp = nombreesp
         self.nombreeng = nombreeng
         self.descripcionesp = descripcionesp
         self.descripcioneng = descripcioneng
         self.categoria_id = categoria_id
         self.foto = foto
+        self.foto2 = foto2
 
     def serialize(self):
         return {
@@ -89,6 +91,7 @@ class Productos(db.Model):
             'descripcioneng': self.descripcioneng,
             'categoria_id': self.categoria_id,
             'foto': self.foto,
+            'foto2': self.foto2,
             # Otros campos si es necesario
         }
 
