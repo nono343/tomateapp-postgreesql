@@ -127,6 +127,7 @@ class Packagings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombreesp = db.Column(db.String(80), nullable=False)
     nombreeng = db.Column(db.String(80), nullable=False)
+    marca = db.Column(db.String(80), nullable=False)
     presentacion = db.Column(db.String(80), nullable=False)
     calibre = db.Column(db.String(80), nullable=False)
     peso_presentacion_g = db.Column(db.String(80), nullable=False)
@@ -136,14 +137,17 @@ class Packagings(db.Model):
     peso_neto_pallet_80x120_kg = db.Column(db.String(80), nullable=False)
     pallet_100x120 = db.Column(db.String(80), nullable=False)
     peso_neto_pallet_100x120_kg = db.Column(db.String(80), nullable=False)
-    foto = db.Column(db.String(120), nullable=False)  # Agrega esta línea para la foto
+    foto = db.Column(db.String(120), nullable=False)  
+    foto2 = db.Column(db.String(120), nullable=True)
+
     producto_id = db.Column(db.Integer, db.ForeignKey('productos.id', name='fk_packagings_producto_id', ondelete='CASCADE'), nullable=False)
 
-    def __init__(self, nombreesp, nombreeng, presentacion, calibre, peso_presentacion_g, peso_neto_kg,
+    def __init__(self, nombreesp, nombreeng, marca, presentacion, calibre, peso_presentacion_g, peso_neto_kg,
                  tamano_caja, pallet_80x120, peso_neto_pallet_80x120_kg, pallet_100x120,
-                 peso_neto_pallet_100x120_kg, foto, producto_id):
+                 peso_neto_pallet_100x120_kg, foto, foto2, producto_id):
         self.nombreesp = nombreesp
         self.nombreeng = nombreeng
+        self.marca = marca
         self.presentacion = presentacion
         self.calibre = calibre
         self.peso_presentacion_g = peso_presentacion_g
@@ -154,6 +158,8 @@ class Packagings(db.Model):
         self.pallet_100x120 = pallet_100x120
         self.peso_neto_pallet_100x120_kg = peso_neto_pallet_100x120_kg
         self.foto = foto
+        self.foto2 = foto2
+
         self.producto_id = producto_id
 
     def serialize(self):
@@ -161,6 +167,7 @@ class Packagings(db.Model):
             'id': self.id,
             'nombreesp': self.nombreesp,
             'nombreeng': self.nombreeng,
+            'marca': self.marca,
             'presentacion': self.presentacion,
             'calibre': self.calibre,
             'peso_presentacion_g': self.peso_presentacion_g,
@@ -171,6 +178,8 @@ class Packagings(db.Model):
             'pallet_100x120': self.pallet_100x120,
             'peso_neto_pallet_100x120_kg': self.peso_neto_pallet_100x120_kg,
             'foto': self.foto,
+            'foto2': self.foto2,
+
             'producto_id': self.producto_id,
             'users': [user.serialize() for user in self.users],  # Agrega esta línea
 

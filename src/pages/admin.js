@@ -36,6 +36,14 @@ function Admin(props) {
             })
     }
 
+
+    const [mostrarFormularioCategorias, setMostrarFormularioCategorias] = useState(false);
+    const toggleFormularioCategorias = () => {
+        setMostrarFormularioCategorias(!mostrarFormularioCategorias);
+        setMostrarFormularioProductos(false);
+        setMostrarFormularioPackaging(false);
+    };
+
     //subir categorias
     const [selectedFileCategory, setSelectedFileCategory] = useState(null);
     const [nombreEspCategory, setNombreEspCategory] = useState('');
@@ -112,15 +120,20 @@ function Admin(props) {
         }
     };
 
-    const [mostrarFormularioCategorias, setMostrarFormularioCategorias] = useState(false);
-    const toggleFormularioCategorias = () => {
-        setMostrarFormularioCategorias(!mostrarFormularioCategorias);
-        setMostrarFormularioProductos(false);
-        setMostrarFormularioPackaging(false);
-    };
-
 
     //subir productos
+
+    const [mostrarFormularioProductos, setMostrarFormularioProductos] = useState(false);
+
+    const toggleFormularioProductos = () => {
+        setMostrarFormularioProductos(!mostrarFormularioProductos);
+
+        // Cerrar siempre mostrarFormularioCategorias al abrir mostrarFormularioProductos
+        setMostrarFormularioCategorias(false);
+        setMostrarFormularioPackaging(false);
+
+    };
+
 
     const [selectedFileProduct, setSelectedFileProduct] = useState(null);
     const [selectedFileProduct2, setSelectedFileProduct2] = useState(null); // Added for the second file
@@ -202,16 +215,24 @@ function Admin(props) {
     };
 
 
-    const [mostrarFormularioProductos, setMostrarFormularioProductos] = useState(false);
 
-    const toggleFormularioProductos = () => {
-        setMostrarFormularioProductos(!mostrarFormularioProductos);
-
-        // Cerrar siempre mostrarFormularioCategorias al abrir mostrarFormularioProductos
-        setMostrarFormularioCategorias(false);
-        setMostrarFormularioPackaging(false);
-
+    const handleDelete = async (productId) => {
+        try {
+            // Lógica para eliminar el producto con el ID proporcionado
+            const response = await axios.delete(`http://localhost:5000/productos/${productId}`);
+            if (response.status === 200) {
+                // Actualizar la lista de productos después de la eliminación
+                const updatedProductsResponse = await axios.get('http://localhost:5000/productos');
+                setProducts(updatedProductsResponse.data.products || []);
+            } else {
+                console.error('Error al eliminar el producto');
+            }
+        } catch (error) {
+            console.error('Error al eliminar el producto', error);
+        }
     };
+
+
 
     //subir meses 
 
@@ -275,9 +296,11 @@ function Admin(props) {
     };
 
 
-    const [file, setFile] = useState(null);
+    const [selectedFilePackaging, setSelectedFilePackaging] = useState(null);
+    const [selectedFilePackaging2, setSelectedFilePackaging2] = useState(null); // Added for the second file
     const [nombreesp, setNombreEsp] = useState('');
     const [nombreeng, setNombreEng] = useState('');
+    const [marca, setMarca] = useState('');
     const [presentacion, setPresentacion] = useState('');
     const [calibre, setCalibre] = useState('');
     const [pesoPresentacion, setPesoPresentacion] = useState('');
@@ -292,6 +315,7 @@ function Admin(props) {
     const [availableUsers, setAvailableUsers] = useState([]);
     const [productIds, setProductIds] = useState(""); // Suponiendo que productIds es una cadena
     const [availableProducts, setAvailableProducts] = useState([]);
+
     const nombresMappings = {
         'BOLSA SNACK EN FLOWPACK': 'FLOWPACK SNACK BAG',
         'TARRINA DE CARTÓN CON TAPA': 'CARDBOARD WITH LID',
@@ -308,6 +332,17 @@ function Admin(props) {
         'CUBO CON TAPA': 'BUCKET WITH LID',
         'GRANEL': 'LOOSE',
     };
+
+    const marcasMapping = {
+        'PARCELA': 'Nombre de Marca 1',
+        'LA PALMA': 'Nombre de Marca 2',
+    };
+    
+    const handleMarcaChange = (e) => {
+        const selectedMarca = e.target.value;
+        setMarca(selectedMarca);
+    };
+        
 
     const handleNombreEspChange = (e) => {
         const selectedNombreEsp = e.target.value;
@@ -338,10 +373,15 @@ function Admin(props) {
         console.log('Usuarios actualizados:', availableUsers);
     }, [availableUsers]);
 
-    const handleFileChange = (event) => {
-        setFile(event.target.files[0]);
+    const handleFileChange1 = (event) => {
+        setSelectedFilePackaging(event.target.files[0]);
     };
-
+    
+    const handleFileChange2 = (event) => {
+        setSelectedFilePackaging2(event.target.files[0]);
+    };
+    
+    
     const handlePackagingCheckboxChange = (id, type) => {
         const stringId = String(id); // Convertir el ID a cadena
 
@@ -371,9 +411,11 @@ function Admin(props) {
 
         try {
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('file', selectedFilePackaging);
+            formData.append('file2', selectedFilePackaging2);
             formData.append('nombreesp', nombreesp);
             formData.append('nombreeng', nombreeng);
+            formData.append('marca', marca);
             formData.append('presentacion', presentacion);
             formData.append('calibre', calibre);
             formData.append('peso_presentacion_g', pesoPresentacion);
@@ -636,22 +678,41 @@ function Admin(props) {
                 <div className='animate-flip-down max-w-screen-xl mx-auto px-10 '>
                     <form className="grid md:grid-cols-3 gap-6">
                         <div className="form-control w-full max-w-xs">
+                            <label className="label">
+                                <span className="label-text">Nombre Producto Español</span>
+                            </label>
                             <input type="text" id="name_product_esp" className="input input-bordered w-full max-w-xs" placeholder="Nombre Producto Español" onChange={handleNombreEspChangeProduct} required />
                         </div>
 
                         <div className="form-control w-full max-w-xs">
+                            <label className="label">
+                                <span className="label-text">Nombre Producto Inglés</span>
+                            </label>
+
                             <input type="text" id="name_product_eng" className="input input-bordered w-full max-w-xs" placeholder="Nombre Producto Inglés" onChange={handleNombreEngChangeProduct} required />
                         </div>
 
                         <div className="form-control w-full max-w-xs">
+                            <label className="label">
+                                <span className="label-text">Descripción Producto Español</span>
+                            </label>
+
                             <input type="text" id="description_product_esp" className="input input-bordered w-full max-w-xs" placeholder="Descripción Producto Español" onChange={handleDescripcionEspChange} required />
                         </div>
 
                         <div className="form-control w-full max-w-xs">
+                            <label className="label">
+                                <span className="label-text">Descripción Producto Inglés</span>
+                            </label>
+
                             <input type="text" id="description_product_eng" className="input input-bordered w-full max-w-xs" placeholder="Descripción Producto Inglés" onChange={handleDescripcionEngChange} required />
                         </div>
 
                         <div className='form-control w-full max-w-xs"'>
+                            <label className="label">
+                                <span className="label-text">Categoría</span>
+                            </label>
+
                             <select
                                 className="select select-bordered w-full max-w-xs"
                                 value={categoryId}
@@ -665,23 +726,31 @@ function Admin(props) {
                                 ))}
                             </select>
                         </div>
+                        <div className="form-control w-full max-w-xs">
+                            <label className="label">
+                                <span className="label-text">Foto Producto Abierto</span>
+                            </label>
+                            <input type="file" className="file-input file-input-bordered file-input-success w-full max-w-xs" onChange={handleFileChangeProduct} required />
+                        </div>
+                        <div className="form-control w-full max-w-xs">
+                            <label className="label">
+                                <span className="label-text">Foto Producto Cerrado</span>
+                            </label>
 
-                        <div className="form-control w-full max-w-xs">
-                            <input type="file" className="file-input file-input-bordered w-full max-w-xs" onChange={handleFileChangeProduct} required />
+                            <input type="file" className="file-input file-input-bordered  file-input-success w-full max-w-xs" onChange={handleFileChangeProduct2} required />
                         </div>
-                     
-                        <div className="form-control w-full max-w-xs">
-                            <input type="file" className="file-input file-input-bordered w-full max-w-xs" onChange={handleFileChangeProduct2} required />
-                        </div>
-                     
-                        <div className='mx-auto md:col-start-2 mb-5 mt-5'>
-                            <button onClick={handleUploadProduct} type="button" className="btn btn-outline btn-success">Crear Producto</button>
-                        </div>
-                        
                     </form>
+                    <div className='flex justify-center md:col-start-2 mb-5 mt-5'>
+                        <button onClick={handleUploadProduct} type="button" className="btn btn-outline btn-success">Crear Producto</button>
+                    </div>
                     {/* agregar meses */}
+
                     <form className="grid grid-cols-1 mb-5">
                         <div>
+                            <label className="label">
+                                <span className="label-text">Producto</span>
+                            </label>
+
                             <select
                                 className="select select-bordered w-full max-w-xs"
                                 value={productId}  // Cambié productId por el valor correcto
@@ -724,7 +793,6 @@ function Admin(props) {
                     </div>
                     <div className="overflow-x-auto mt-5">
                         <table className="table">
-                            {/* head */}
                             <thead>
                                 <tr>
                                     <th>Foto</th>
@@ -734,17 +802,21 @@ function Admin(props) {
                                     <th className="hidden md:table-cell">Descripción</th>
                                     <th className="hidden md:table-cell">Descripción Inglés</th>
                                     <th>Meses de Producción</th>
+                                    <th>Eliminar Producto</th> {/* Nueva columna para el botón de eliminación */}
                                 </tr>
                             </thead>
                             <tbody>
-                                {products.map(product => (
+                                {products.map((product) => (
                                     <tr key={product.id}>
                                         <td>
                                             {product.foto && (
                                                 <div className="flex items-center gap-3">
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
-                                                            <img src={`http://localhost:5000/uploads/${product.foto}`} alt={product.nombreesp} />
+                                                            <img
+                                                                src={`http://localhost:5000/uploads/${product.foto}`}
+                                                                alt={product.nombreesp}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -755,28 +827,28 @@ function Admin(props) {
                                                 <div className="flex items-center gap-3">
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
-                                                            <img src={`http://localhost:5000/uploads/${product.foto2}`} alt={product.nombreesp} />
+                                                            <img
+                                                                src={`http://localhost:5000/uploads/${product.foto2}`}
+                                                                alt={product.nombreesp}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>
                                             )}
                                         </td>
+                                        <td>{product.nombreesp}</td>
+                                        <td className="hidden md:table-cell">{product.nombreeng}</td>
+                                        <td className="hidden md:table-cell">{product.descripcionesp}</td>
+                                        <td className="hidden md:table-cell">{product.descripcioneng}</td>
                                         <td>
-                                            {product.nombreesp}
-                                        </td>
-                                        <td className="hidden md:table-cell">
-                                            {product.nombreeng}
-                                        </td>
-                                        <td className="hidden md:table-cell">
-                                            {product.descripcionesp}
-                                        </td>
-                                        <td className="hidden md:table-cell">
-                                            {product.descripcioneng}
-                                        </td>
-                                        <td>
-                                            {product.meses_de_produccion.map(mes => (
+                                            {product.meses_de_produccion.map((mes) => (
                                                 <span key={mes.id}>{mes.mes} </span>
                                             ))}
+                                        </td>
+                                        <td>
+                                            <button className="btn btn-outline btn-error" onClick={() => handleDelete(product.id)}>
+                                                Eliminar
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -820,6 +892,25 @@ function Admin(props) {
                                 required
                                 disabled
                             />
+                        </div>
+                        <div className="form-control w-full max-w-xs">
+                            <select
+                                id="name_packaging_esp"
+                                className="input input-bordered w-full max-w-xs"
+                                value={marca}
+                                onChange={handleMarcaChange}
+                                required
+                            >
+                                <option value="" disabled>
+
+                                    Seleccione un nombre en español
+                                </option>
+                                {Object.keys(marcasMapping ).map((marcasOption) => (
+                                    <option key={marcasOption} value={marcasOption}>
+                                        {marcasOption}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="form-control w-full max-w-xs">
@@ -951,7 +1042,10 @@ function Admin(props) {
                         )}
 
                         <div className="form-control">
-                            <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange} required />
+                            <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange1} required />
+                        </div>
+                        <div className="form-control mt-3">
+                            <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange2} required />
                         </div>
                         <div className='mx-auto md:col-start-2 mt-5 '>
                             <button onClick={handleSubmit} type="button" className="btn btn-outline btn-success">Crear Packaging</button>
@@ -963,7 +1057,8 @@ function Admin(props) {
                         <table className="table">
                             <thead>
                                 <tr>
-                                    <th>Foto</th>
+                                    <th>Foto Unidad</th>
+                                    <th>Foto Confección</th>
                                     <th>
                                         <select
                                             className="p-1 border border-gray-300 rounded"
@@ -979,6 +1074,7 @@ function Admin(props) {
                                         </select>
                                     </th>
                                     <th>Packaging</th>
+                                    <th>Marca</th>
                                     <th>Unidades</th>
                                     <th>Calibre</th>
                                     <th>Peso Packaging (g)</th>
@@ -991,10 +1087,9 @@ function Admin(props) {
                                     <th>Usuarios</th>
                                     <th>Editar Usuarios</th>
                                     <th>Eliminar Packaging</th>
-                                    <th>Marca</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className='text-center'>
                                 {datosEmpaquetadoFiltrados.map((data) => (
                                     data.packagings.map((packaging, index) => {
                                         const modalId = `my_modal_${data.id}_${index}`;
@@ -1008,8 +1103,18 @@ function Admin(props) {
                                                         />
                                                     </div>
                                                 </td>
+                                                <td>
+                                                    <div className="mask mask-squircle w-12 h-12">
+                                                        <img
+                                                            src={`http://localhost:5000/uploads/${packaging.foto2}`}
+                                                            alt={packaging.nombreesp || 'Alt Text Placeholder'}
+                                                        />
+                                                    </div>
+                                                </td>
+
                                                 <td>{data.nombreesp}</td>
                                                 <td>{packaging.nombreesp}</td>
+                                                <td>{packaging.marca}</td>
                                                 <td>{packaging.presentacion}</td>
                                                 <td>{packaging.calibre}</td>
                                                 <td>{packaging.peso_presentacion_g}</td>
@@ -1051,7 +1156,7 @@ function Admin(props) {
                                                 </td>
                                                 <td>
                                                     <button
-                                                        className="btn btn-outline btn-danger"
+                                                        className="btn btn-outline btn-error"
                                                         onClick={() => handleDeletePackaging(data.id)}
                                                     >
                                                         Eliminar

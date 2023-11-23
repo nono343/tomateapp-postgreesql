@@ -336,6 +336,7 @@ def get_products():
                     'id': packaging.id,
                     'nombreesp': packaging.nombreesp,
                     'nombreeng': packaging.nombreeng,
+                    'marca': packaging.marca,
                     'presentacion': packaging.presentacion,
                     'calibre': packaging.calibre,
                     'peso_presentacion_g': packaging.peso_presentacion_g,
@@ -346,6 +347,7 @@ def get_products():
                     'pallet_100x120': packaging.pallet_100x120,
                     'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
                     'foto': packaging.foto,
+                    'foto2': packaging.foto2,
                     'producto_id': packaging.producto_id,
                     'users': users,  # Agrega la lista de usuarios al diccionario de packaging_data
                 }
@@ -370,6 +372,21 @@ def get_products():
     except Exception as e:
         # Manejo de errores
         return jsonify({'error': str(e)}), 500
+
+
+
+
+# Ruta para borrar productos
+@api.route('/productos/<int:producto_id>', methods=['DELETE'])
+def borrar_producto(producto_id):
+    producto = Productos.query.get(producto_id)
+    if producto:
+        db.session.delete(producto)
+        db.session.commit()
+        return jsonify({'mensaje': 'Producto borrado correctamente'}), 200
+    else:
+        return jsonify({'mensaje': 'Producto no encontrado'}), 404
+
 
 
 # Ruta para obtener los meses de producción asociados a un producto
@@ -414,14 +431,17 @@ def agregar_meses_de_produccion(producto_id):
 def upload_packaging():
     try:
         if 'file' not in request.files:
-            return jsonify({'error': 'No file part'}), 400
+            return jsonify({'error': 'At least one file is required'}), 400
 
         file = request.files['file']
+        file2 = request.files.get('file2')  # Use get to allow file2 to be None
+
         if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
-        
+            return jsonify({'error': 'No selected file for the first photo'}), 400
+
         nombreesp = request.form['nombreesp']
         nombreeng = request.form['nombreeng']
+        marca = request.form['marca']
         presentacion = request.form['presentacion']
         calibre = request.form['calibre']
         peso_presentacion_g = request.form['peso_presentacion_g']
@@ -431,18 +451,23 @@ def upload_packaging():
         peso_neto_pallet_80x120_kg = request.form['peso_neto_pallet_80x120_kg']
         pallet_100x120 = request.form['pallet_100x120']
         peso_neto_pallet_100x120_kg = request.form['peso_neto_pallet_100x120_kg']
-        foto = request.files['file']
-
         producto_id = request.form['producto_id']
-        user_ids = request.form.getlist('user_ids')  # Cambiado de user_id a user_ids
+        user_ids = request.form.getlist('user_ids')
 
-        if foto and allowed_file(foto.filename):
-            filename = secure_filename(foto.filename)
-            foto.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filename2 = None
+
+            if file2 and allowed_file(file2.filename):
+                filename2 = secure_filename(file2.filename)
+                file2.save(os.path.join(api.config['UPLOAD_FOLDER'], filename2))
+
+            file.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
 
             nuevo_packaging = Packagings(
                 nombreesp=nombreesp,
                 nombreeng=nombreeng,
+                marca=marca,
                 presentacion=presentacion,
                 calibre=calibre,
                 peso_presentacion_g=peso_presentacion_g,
@@ -453,6 +478,7 @@ def upload_packaging():
                 pallet_100x120=pallet_100x120,
                 peso_neto_pallet_100x120_kg=peso_neto_pallet_100x120_kg,
                 foto=filename,
+                foto2=filename2,
                 producto_id=producto_id
             )
 
@@ -490,6 +516,7 @@ def get_packagings():
                 'id': packaging.id,
                 'nombreesp': packaging.nombreesp,
                 'nombreeng': packaging.nombreeng,
+                'marca': packaging.marca,
                 'presentacion': packaging.presentacion,
                 'calibre': packaging.calibre,
                 'peso_presentacion_g': packaging.peso_presentacion_g,
@@ -500,6 +527,7 @@ def get_packagings():
                 'pallet_100x120': packaging.pallet_100x120,
                 'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
                 'foto': packaging.foto,
+                'foto2': packaging.foto2,
                 'producto_id': packaging.producto_id,
                 'users': users,
             }
