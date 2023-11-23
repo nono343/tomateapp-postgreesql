@@ -3,7 +3,6 @@ import axios from 'axios';
 import EditPackagingUsers from './PackagingTable';
 
 function Admin(props) {
-
     const [profileData, setProfileData] = useState(null)
 
     useEffect(() => {
@@ -113,20 +112,12 @@ function Admin(props) {
         }
     };
 
-
-
-
     const [mostrarFormularioCategorias, setMostrarFormularioCategorias] = useState(false);
-
     const toggleFormularioCategorias = () => {
         setMostrarFormularioCategorias(!mostrarFormularioCategorias);
         setMostrarFormularioProductos(false);
         setMostrarFormularioPackaging(false);
     };
-
-
-
-
 
 
     //subir productos
@@ -199,6 +190,9 @@ function Admin(props) {
                         .catch((error) => {
                             console.error('Error al obtener los productos después de cargar', error);
                         });
+                    const updatedProductsResponse = await axios.get('http://localhost:5000/productos');
+                    setAvailableProducts(updatedProductsResponse.data.products || []);
+                    setActualizacionProductos(true);
                 } else {
                     console.error('Error al cargar el producto con foto');
                 }
@@ -299,6 +293,31 @@ function Admin(props) {
     const [availableUsers, setAvailableUsers] = useState([]);
     const [productIds, setProductIds] = useState(""); // Suponiendo que productIds es una cadena
     const [availableProducts, setAvailableProducts] = useState([]);
+    const nombresMappings = {
+        'BOLSA SNACK EN FLOWPACK': 'FLOWPACK SNACK BAG',
+        'TARRINA DE CARTÓN CON TAPA': 'CARDBOARD WITH LID',
+        'TARRINA DE CARTÓN CON FLOWPACK': 'CARDBOARD WITH FLOWPACK',
+        'BOLSA EN FLOWPACK': 'FLOWPACK BAG',
+        'TARRINA TERMOSELLADA': 'TOP SEAL PUNNET',
+        'TARRINA CON FLOWPACK': 'PUNNET WITH FLOWPACK',
+        'TARRINA CON BISAGRA TRIANGULAR': 'TRIANGULAR CLAMSHELL',
+        'VASO CON TAPA': 'SHAKER WITH LID',
+        'VASO APLICABLE CON VISAGRA': 'STOCKABLE CLAMSHELL SHAKER',
+        'TARRINA TERMOSELLADA CON ENFAJADO': 'TOP SEAL PUNNET WITH BAND',
+        'TARRINA PASTA CELULOSA TERMOSELLADA': 'CELLULOSE PULP TOP SEAL PUNNET',
+        'TARRINA CON TAPA': 'PUNNET WITH LID',
+        'CUBO CON TAPA': 'BUCKET WITH LID',
+        'GRANEL': 'LOOSE',
+    };
+
+    const handleNombreEspChange = (e) => {
+        const selectedNombreEsp = e.target.value;
+        setNombreEsp(selectedNombreEsp);
+
+        const selectedNombreEng = nombresMappings[selectedNombreEsp] || '';
+        setNombreEng(selectedNombreEng);
+    };
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -382,6 +401,11 @@ function Admin(props) {
                 },
             });
 
+            if (response.status === 200) {
+                // Update the list of packagingData after successful submission
+                setUpdatedPackaging(new Date()); // Change the state to trigger the useEffect
+            }
+
             console.log(response.data.message);
             // Realizar acciones adicionales después de la carga exitosa
         } catch (error) {
@@ -412,6 +436,10 @@ function Admin(props) {
     const [packagingData, setPackagingData] = useState([]);
     const [selectedPackaging, setSelectedPackaging] = useState(null);
     const [updatedPackaging, setUpdatedPackaging] = useState(null);
+    const [actualizacionProductos, setActualizacionProductos] = useState(false);
+    const [filtroProducto, setFiltroProducto] = useState('');
+    const [filtroUsuario, setFiltroUsuario] = useState('');
+    const [editedPackaging, setEditedPackaging] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -419,6 +447,7 @@ function Admin(props) {
                 const response = await axios.get('http://localhost:5000/productos');
                 const data = response.data.products;
                 setPackagingData(data);
+                console.log('Packagings:', data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -429,8 +458,25 @@ function Admin(props) {
 
     const handleEditUsers = (packaging) => {
         setSelectedPackaging(packaging);
-        // Puedes abrir un modal u realizar otras acciones necesarias
+        setEditedPackaging(packaging);
     };
+
+    // En el useEffect que maneja la actualización de empaques
+    useEffect(() => {
+        if (editedPackaging) {
+            // Actualiza el empaque directamente en el estado
+            setPackagingData((prevData) => {
+                const newData = [...prevData];
+                // Encuentra y actualiza el empaque editado
+                // ...
+
+                return newData;
+            });
+
+            // Restablece la referencia al empaque editado
+            setEditedPackaging(null);
+        }
+    }, [editedPackaging]);
 
     const handleDeletePackaging = async (packagingId) => {
         try {
@@ -453,6 +499,39 @@ function Admin(props) {
             console.error('Error en la solicitud de eliminación:', error);
         }
     };
+
+    // UseEffect para recargar datos cuando actualizacionProductos cambia
+    useEffect(() => {
+        console.log('Efecto de actualización de productos ejecutado');
+        console.log('Productos después de la actualización:', packagingData);
+        if (actualizacionProductos) {
+            // Fetch the updated list of products right after successful upload
+            axios.get('http://localhost:5000/productos')
+                .then((response) => {
+                    setPackagingData(response.data.products);
+                })
+                .catch((error) => {
+                    console.error('Error al obtener los productos después de cargar', error);
+                });
+
+            // Reiniciar el estado de actualización después de cargar los productos
+            setActualizacionProductos(false);
+        }
+    }, [actualizacionProductos]);
+
+    // Obtener una lista única de nombres de productos para el filtro de selección
+    const nombresProductos = [...new Set(packagingData.map(data => data.nombreesp))];
+
+    // Obtener una lista única de usuarios para el filtro de selección
+    const usuariosDisponibles = [...new Set(packagingData.flatMap(data => (data.packagings.flatMap(packaging => packaging.users || []))))];
+
+    // Datos de empaquetado filtrados por el nombre del producto y usuario
+    const datosEmpaquetadoFiltrados = packagingData.filter(data =>
+        (filtroProducto === '' || data.nombreesp.toLowerCase() === filtroProducto.toLowerCase()) &&
+        (filtroUsuario === '' || data.packagings.some(packaging => (packaging.users || []).includes(filtroUsuario)))
+    );
+
+    // Resto de tu código...
 
 
 
@@ -695,11 +774,37 @@ function Admin(props) {
                 <div className='animate-flip-down max-w-screen-xl mx-auto px-10'>
                     <form className="grid md:grid-cols-3 gap-6 mb-5">
                         <div className="form-control w-full max-w-xs">
-                            <input type="text" id="name_packaging_esp" className="input input-bordered w-full max-w-xs" placeholder="Nombre Packaging Español" onChange={(e) => setNombreEsp(e.target.value)} required />
+                            <select
+                                id="name_packaging_esp"
+                                className="input input-bordered w-full max-w-xs"
+                                value={nombreesp}
+                                onChange={handleNombreEspChange}
+                                required
+                            >
+                                <option value="" disabled>
+
+                                    Seleccione un nombre en español
+                                </option>
+                                {Object.keys(nombresMappings).map((nombreEspOption) => (
+                                    <option key={nombreEspOption} value={nombreEspOption}>
+                                        {nombreEspOption}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="form-control w-full max-w-xs">
-                            <input type="text" id="name_packaging_eng" className="input input-bordered w-full max-w-xs" placeholder="Nombre Packaging Ingles" onChange={(e) => setNombreEng(e.target.value)} required />
+                            <input
+                                type="text"
+                                id="name_packaging_eng"
+                                className="input input-bordered w-full max-w-xs"
+                                placeholder="Nombre Packaging Ingles"
+                                value={nombreeng}
+                                readOnly
+                                required
+                                disabled
+                            />
                         </div>
+
                         <div className="form-control w-full max-w-xs">
                             <input
                                 type="text"
@@ -842,15 +947,29 @@ function Admin(props) {
                             <thead>
                                 <tr>
                                     <th>Foto</th>
-                                    <th>Nombre Packaging</th>
+                                    <th>
+                                        <select
+                                            className="p-1 border border-gray-300 rounded"
+                                            value={filtroProducto}
+                                            onChange={(e) => setFiltroProducto(e.target.value)}
+                                        >
+                                            <option value="">Todos los productos</option>
+                                            {nombresProductos.map((nombre) => (
+                                                <option key={nombre} value={nombre}>
+                                                    {nombre}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </th>
+                                    <th>Packaging</th>
                                     <th>Unidades</th>
                                     <th>Calibre</th>
-                                    <th>Peso Presentación (g)</th>
-                                    <th>Peso Neto (kg)</th>
+                                    <th>Peso Packaging (g)</th>
+                                    <th>Peso Neto Confección (kg)</th>
                                     <th>Tamaño Caja</th>
-                                    <th>Pallet 80x120</th>
+                                    <th>Unidades Pallet 80x120</th>
                                     <th>Peso Neto Pallet 80x120 (kg)</th>
-                                    <th>Pallet 100x120</th>
+                                    <th>Unidades Pallet 100x120</th>
                                     <th>Peso Neto Pallet 100x120 (kg)</th>
                                     <th>Usuarios</th>
                                     <th>Editar Usuarios</th>
@@ -859,70 +978,75 @@ function Admin(props) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {packagingData?.length > 0 &&
-                                    packagingData[0].packagings?.map((packaging) => (
-                                        <tr key={packaging.id}>
-                                            <td>
-                                                <div className="mask mask-squircle w-12 h-12">
-                                                    <img
-                                                        src={`http://localhost:5000/uploads/${packaging.foto}`}
-                                                        alt={packaging.nombreesp || 'Alt Text Placeholder'}
-                                                    />
-                                                </div>
-                                            </td>
-                                            <td>{packaging.nombreesp}</td>
-                                            <td>{packaging.presentacion}</td>
-                                            <td>{packaging.calibre}</td>
-                                            <td>{packaging.peso_presentacion_g}</td>
-                                            <td>{packaging.peso_neto_kg}</td>
-                                            <td>{packaging.tamano_caja}</td>
-                                            <td>{packaging.pallet_80x120}</td>
-                                            <td>{packaging.peso_neto_pallet_80x120_kg}</td>
-                                            <td>{packaging.pallet_100x120}</td>
-                                            <td>{packaging.peso_neto_pallet_100x120_kg}</td>
-                                            <td>
-                                                {packaging.users?.map((user) => (
-                                                    <span key={user} className="mr-2">
-                                                        {user}
-                                                    </span>
-                                                ))}
-                                            </td>
-                                            <td>
-
-                                                <button
-                                                    className="btn btn-outline btn-warning"
-                                                    onClick={() => {
-                                                        document.getElementById('my_modal_2').showModal();
-                                                        handleEditUsers(packaging);
-                                                    }}
-                                                >
-                                                    Editar Usuarios
-                                                </button>
-                                                <dialog id="my_modal_2" className="modal ">
-                                                    <div className="modal-box ">
-                                                        {selectedPackaging && (
-                                                            <EditPackagingUsers
-                                                                packaging={selectedPackaging}
-                                                                onUpdate={() => setUpdatedPackaging(selectedPackaging)}
-                                                            />
-                                                        )}
+                                {datosEmpaquetadoFiltrados.map((data) => (
+                                    data.packagings.map((packaging, index) => {
+                                        const modalId = `my_modal_${data.id}_${index}`;
+                                        return (
+                                            <tr key={`${data.id}_${index}`}>
+                                                <td>
+                                                    <div className="mask mask-squircle w-12 h-12">
+                                                        <img
+                                                            src={`http://localhost:5000/uploads/${packaging.foto}`}
+                                                            alt={packaging.nombreesp || 'Alt Text Placeholder'}
+                                                        />
                                                     </div>
-                                                    <form method="dialog" className="modal-backdrop" onClick={() => document.getElementById('my_modal_2').close()}>
-                                                    </form>
-                                                </dialog>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-outline btn-danger"
-                                                    onClick={() => handleDeletePackaging(packaging.id)}
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                                <td>{data.nombreesp}</td>
+                                                <td>{packaging.nombreesp}</td>
+                                                <td>{packaging.presentacion}</td>
+                                                <td>{packaging.calibre}</td>
+                                                <td>{packaging.peso_presentacion_g}</td>
+                                                <td>{packaging.peso_neto_kg}</td>
+                                                <td>{packaging.tamano_caja}</td>
+                                                <td>{packaging.pallet_80x120}</td>
+                                                <td>{packaging.peso_neto_pallet_80x120_kg}</td>
+                                                <td>{packaging.pallet_100x120}</td>
+                                                <td>{packaging.peso_neto_pallet_100x120_kg}</td>
+                                                <td>
+                                                    {packaging.users?.map((user) => (
+                                                        <span key={user} className="mr-2">
+                                                            {user}
+                                                        </span>
+                                                    ))}
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="btn btn-outline btn-warning"
+                                                        onClick={() => {
+                                                            document.getElementById(modalId).showModal();
+                                                            handleEditUsers(packaging);
+                                                        }}
+                                                    >
+                                                        Editar Usuarios
+                                                    </button>
+                                                    <dialog id={modalId} className="modal">
+                                                        <div className="modal-box">
+                                                            {selectedPackaging && (
+                                                                <EditPackagingUsers
+                                                                    packaging={selectedPackaging}
+                                                                    onUpdate={() => setUpdatedPackaging(selectedPackaging)}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <form method="dialog" className="modal-backdrop" onClick={() => document.getElementById(modalId).close()}>
+                                                        </form>
+                                                    </dialog>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="btn btn-outline btn-danger"
+                                                        onClick={() => handleDeletePackaging(data.id)}
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ))}
                             </tbody>
                         </table>
+
                     </div>
                 </div>
             )}

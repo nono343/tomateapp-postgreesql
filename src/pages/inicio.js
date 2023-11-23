@@ -4,9 +4,9 @@ import axios from 'axios';
 import ProductSearch from '../components/ProductSearch';
 
 export default function Inicio(props) {
-    const location = useLocation();
     const [categories, setCategories] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+
 
     useEffect(() => {
         axios.get('http://localhost:5000/categorias')
@@ -19,13 +19,6 @@ export default function Inicio(props) {
             });
     }, []);
 
-    const handleSearch = () => {
-        setIsSearching(true);
-    };
-
-    const handleSearchComplete = () => {
-        setIsSearching(false);
-    };
 
     useEffect(() => {
         console.log('isSpanish changed:', props.isSpanish);
@@ -34,7 +27,7 @@ export default function Inicio(props) {
 
     return (
         <>
-            <ProductSearch isSpanish={props.isSpanish} onSearch={handleSearch} onSearchComplete={handleSearchComplete}  />
+            <ProductSearch isSpanish={props.isSpanish} setIsSearching={setIsSearching} />
             {!isSearching && (
                 <div className=" py-5 max-w-screen-xl mx-auto">
                     <div className="container  m-auto px-6 text-gray-500 md:px-12">
