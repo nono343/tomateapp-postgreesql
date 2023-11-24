@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import EditPackagingUsers from './PackagingTable';
+import EditPackagingUsers from './EditPackagingUsers';
 
 function Admin(props) {
     const [profileData, setProfileData] = useState(null)
@@ -337,12 +337,12 @@ function Admin(props) {
         'PARCELA': 'Nombre de Marca 1',
         'LA PALMA': 'Nombre de Marca 2',
     };
-    
+
     const handleMarcaChange = (e) => {
         const selectedMarca = e.target.value;
         setMarca(selectedMarca);
     };
-        
+
 
     const handleNombreEspChange = (e) => {
         const selectedNombreEsp = e.target.value;
@@ -376,12 +376,12 @@ function Admin(props) {
     const handleFileChange1 = (event) => {
         setSelectedFilePackaging(event.target.files[0]);
     };
-    
+
     const handleFileChange2 = (event) => {
         setSelectedFilePackaging2(event.target.files[0]);
     };
-    
-    
+
+
     const handlePackagingCheckboxChange = (id, type) => {
         const stringId = String(id); // Convertir el ID a cadena
 
@@ -405,7 +405,6 @@ function Admin(props) {
             );
         }
     };
-
     const handleSubmit = async (event) => {
         event.preventDefault();
 
@@ -425,11 +424,8 @@ function Admin(props) {
             formData.append('peso_neto_pallet_80x120_kg', pesoNetoPallet80x120);
             formData.append('pallet_100x120', pallet100x120);
             formData.append('peso_neto_pallet_100x120_kg', pesoNetoPallet100x120);
-
-            // Agrega el ID del producto al formData
             formData.append('producto_id', productIds);
 
-            // Agrega cada user_id al formData
             userIds.forEach((userId) => {
                 formData.append('user_ids', userId);
             });
@@ -443,8 +439,12 @@ function Admin(props) {
             });
 
             if (response.status === 200) {
-                // Update the list of packagingData after successful submission
-                setUpdatedPackaging(new Date()); // Change the state to trigger the useEffect
+                // Actualiza el estado de packagings después de la carga exitosa
+                fetchData();
+                // Cambia el estado para activar el useEffect y recargar los datos
+                setUpdatedPackaging(new Date());
+                // Cambia el estado para activar la actualización de filteredPackagings
+                setActualizacionProductos(true);
             }
 
             console.log(response.data.message);
@@ -454,6 +454,7 @@ function Admin(props) {
             // Manejar el error según sea necesario
         }
     };
+
 
 
 
@@ -497,49 +498,6 @@ function Admin(props) {
         fetchData();
     }, [updatedPackaging]);
 
-    const handleEditUsers = (packaging) => {
-        setSelectedPackaging(packaging);
-        setEditedPackaging(packaging);
-    };
-
-    // En el useEffect que maneja la actualización de empaques
-    useEffect(() => {
-        if (editedPackaging) {
-            // Actualiza el empaque directamente en el estado
-            setPackagingData((prevData) => {
-                const newData = [...prevData];
-                // Encuentra y actualiza el empaque editado
-                // ...
-
-                return newData;
-            });
-
-            // Restablece la referencia al empaque editado
-            setEditedPackaging(null);
-        }
-    }, [editedPackaging]);
-
-    const handleDeletePackaging = async (packagingId) => {
-        try {
-            // Realiza una solicitud al servidor para eliminar el packaging
-            const response = await fetch(`http://localhost:5000/productos/packagings/${packagingId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                // Actualiza la lista de packagingData después de la eliminación exitosa
-                setUpdatedPackaging(new Date()); // Cambia el estado para activar el useEffect
-            } else {
-                // Manejo de errores en caso de que la eliminación no sea exitosa
-                console.error('Error al eliminar el packaging');
-            }
-        } catch (error) {
-            console.error('Error en la solicitud de eliminación:', error);
-        }
-    };
 
     // UseEffect para recargar datos cuando actualizacionProductos cambia
     useEffect(() => {
@@ -560,20 +518,47 @@ function Admin(props) {
         }
     }, [actualizacionProductos]);
 
-    // Obtener una lista única de nombres de productos para el filtro de selección
-    const nombresProductos = [...new Set(packagingData.map(data => data.nombreesp))];
 
-    // Obtener una lista única de usuarios para el filtro de selección
-    const usuariosDisponibles = [...new Set(packagingData.flatMap(data => (data.packagings.flatMap(packaging => packaging.users || []))))];
+    const [packagings, setPackagings] = useState([]);
+    const [filters, setFilters] = useState({
+        nombreesp: '',
+        calibre: '',
+        marca: '',
+        nombreproducto: ''
+    });
 
-    // Datos de empaquetado filtrados por el nombre del producto y usuario
-    const datosEmpaquetadoFiltrados = packagingData.filter(data =>
-        (filtroProducto === '' || data.nombreesp.toLowerCase() === filtroProducto.toLowerCase()) &&
-        (filtroUsuario === '' || data.packagings.some(packaging => (packaging.users || []).includes(filtroUsuario)))
-    );
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-    // Resto de tu código...
+    const fetchData = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/packagings');
+            setPackagings(response.data.packagings);
+            console.log(response.data.packagings)
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
 
+    const getUniqueValues = (columnName) => {
+        const uniqueValues = new Set(packagings.map((packaging) => packaging[columnName]));
+        return Array.from(uniqueValues);
+    };
+
+    const handleFilterChange = (columnName, value) => {
+        setFilters({ ...filters, [columnName]: value });
+    };
+
+    const filteredPackagings = packagings.filter((packaging) => {
+        return (
+            (filters.nombreesp === '' || packaging.nombreesp.toLowerCase().includes(filters.nombreesp.toLowerCase())) &&
+            (filters.calibre === '' || packaging.calibre.toLowerCase() === filters.calibre.toLowerCase()) &&
+            (filters.marca === '' || packaging.marca.toLowerCase().includes(filters.marca.toLowerCase())) &&
+            (filters.nombreproducto === '' || packaging.nombreproducto.toLowerCase().includes(filters.nombreproducto.toLowerCase()))
+
+        );
+    });
 
 
     return (
@@ -905,7 +890,7 @@ function Admin(props) {
 
                                     Seleccione un nombre en español
                                 </option>
-                                {Object.keys(marcasMapping ).map((marcasOption) => (
+                                {Object.keys(marcasMapping).map((marcasOption) => (
                                     <option key={marcasOption} value={marcasOption}>
                                         {marcasOption}
                                     </option>
@@ -1057,26 +1042,61 @@ function Admin(props) {
                         <table className="table">
                             <thead>
                                 <tr>
-                                    <th>Foto Unidad</th>
-                                    <th>Foto Confección</th>
                                     <th>
                                         <select
-                                            className="p-1 border border-gray-300 rounded"
-                                            value={filtroProducto}
-                                            onChange={(e) => setFiltroProducto(e.target.value)}
+                                            value={filters.nombreproducto}
+                                            onChange={(e) => handleFilterChange('nombreproducto', e.target.value)}
+                                            className="border border-gray-300 px-2 py-1"
                                         >
-                                            <option value="">Todos los productos</option>
-                                            {nombresProductos.map((nombre) => (
-                                                <option key={nombre} value={nombre}>
-                                                    {nombre}
+                                            <option value="">Seleccionar</option>
+                                            {getUniqueValues('nombreproducto').map((option) => (
+                                                <option key={option} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select></th>
+                                    <th>
+                                        <select
+                                            className="border border-gray-300 px-2 py-1"
+                                            value={filters.nombreesp}
+                                            onChange={(e) => handleFilterChange('nombreesp', e.target.value)}
+                                        >
+                                            <option value="">Seleccionar</option>
+                                            {getUniqueValues('nombreesp').map((option) => (
+                                                <option key={option} value={option}>
+                                                    {option}
                                                 </option>
                                             ))}
                                         </select>
                                     </th>
-                                    <th>Packaging</th>
-                                    <th>Marca</th>
+                                    <th>
+                                        <select
+                                            value={filters.marca}
+                                            onChange={(e) => handleFilterChange('marca', e.target.value)}
+                                            className="border border-gray-300 px-2 py-1"
+                                        >
+                                            <option value="">Seleccionar</option>
+                                            {getUniqueValues('marca').map((option) => (
+                                                <option key={option} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </th>
+                                    <th>                <select
+                                        value={filters.calibre}
+                                        onChange={(e) => handleFilterChange('calibre', e.target.value)}
+                                        className="border border-gray-300 px-2 py-1"
+                                    >
+                                        <option value="">Seleccionar Calibre</option>
+                                        {getUniqueValues('calibre').map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    </th>
                                     <th>Unidades</th>
-                                    <th>Calibre</th>
                                     <th>Peso Packaging (g)</th>
                                     <th>Peso Neto Confección (kg)</th>
                                     <th>Tamaño Caja</th>
@@ -1084,88 +1104,33 @@ function Admin(props) {
                                     <th>Peso Neto Pallet 80x120 (kg)</th>
                                     <th>Unidades Pallet 100x120</th>
                                     <th>Peso Neto Pallet 100x120 (kg)</th>
-                                    <th>Usuarios</th>
+                                    <th>Clientes</th>
                                     <th>Editar Usuarios</th>
                                     <th>Eliminar Packaging</th>
                                 </tr>
                             </thead>
                             <tbody className='text-center'>
-                                {datosEmpaquetadoFiltrados.map((data) => (
-                                    data.packagings.map((packaging, index) => {
-                                        const modalId = `my_modal_${data.id}_${index}`;
-                                        return (
-                                            <tr key={`${data.id}_${index}`}>
-                                                <td>
-                                                    <div className="mask mask-squircle w-12 h-12">
-                                                        <img
-                                                            src={`http://localhost:5000/uploads/${packaging.foto}`}
-                                                            alt={packaging.nombreesp || 'Alt Text Placeholder'}
-                                                        />
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div className="mask mask-squircle w-12 h-12">
-                                                        <img
-                                                            src={`http://localhost:5000/uploads/${packaging.foto2}`}
-                                                            alt={packaging.nombreesp || 'Alt Text Placeholder'}
-                                                        />
-                                                    </div>
-                                                </td>
-
-                                                <td>{data.nombreesp}</td>
-                                                <td>{packaging.nombreesp}</td>
-                                                <td>{packaging.marca}</td>
-                                                <td>{packaging.presentacion}</td>
-                                                <td>{packaging.calibre}</td>
-                                                <td>{packaging.peso_presentacion_g}</td>
-                                                <td>{packaging.peso_neto_kg}</td>
-                                                <td>{packaging.tamano_caja}</td>
-                                                <td>{packaging.pallet_80x120}</td>
-                                                <td>{packaging.peso_neto_pallet_80x120_kg}</td>
-                                                <td>{packaging.pallet_100x120}</td>
-                                                <td>{packaging.peso_neto_pallet_100x120_kg}</td>
-                                                <td>
-                                                    {packaging.users?.map((user) => (
-                                                        <span key={user} className="mr-2">
-                                                            {user}
-                                                        </span>
-                                                    ))}
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className="btn btn-outline btn-warning"
-                                                        onClick={() => {
-                                                            document.getElementById(modalId).showModal();
-                                                            handleEditUsers(packaging);
-                                                        }}
-                                                    >
-                                                        Editar Usuarios
-                                                    </button>
-                                                    <dialog id={modalId} className="modal">
-                                                        <div className="modal-box">
-                                                            {selectedPackaging && (
-                                                                <EditPackagingUsers
-                                                                    packaging={selectedPackaging}
-                                                                    onUpdate={() => setUpdatedPackaging(selectedPackaging)}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                        <form method="dialog" className="modal-backdrop" onClick={() => document.getElementById(modalId).close()}>
-                                                        </form>
-                                                    </dialog>
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className="btn btn-outline btn-error"
-                                                        onClick={() => handleDeletePackaging(data.id)}
-                                                    >
-                                                        Eliminar
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
+                                {filteredPackagings.map((packaging) => (
+                                    <tr key={packaging.id}>
+                                        <td className="py-2 px-4 border-b">{packaging.nombreproducto}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.nombreesp}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.marca}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.calibre}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.presentacion}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.peso_presentacion_g}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.peso_neto_kg}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.tamano_caja}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.pallet_80x120}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_80x120_kg}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.pallet_100x120}</td>
+                                        <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_100x120_kg}</td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.users.map((user) => (
+                                                <div key={user.id}>{user.username}</div>
+                                            ))}</td>
+                                    </tr>
                                 ))}
+
                             </tbody>
                         </table>
 

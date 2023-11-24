@@ -12,6 +12,7 @@ import Inicio from './pages/inicio';
 import DetalleProducto from './pages/productos';
 import { Navbar } from './components/Navbar';
 import PackagingTable from './pages/PackagingTable';
+import PruebaPackaging from './pages/PruebaPackaging';
 
 function App() {
   // Obtiene el token y las funciones relacionadas con el token usando el hook useToken
@@ -67,6 +68,8 @@ function App() {
         {/* Rutas de inicio de sesión y registro */}
         <Route path='/' element={<Login setToken={setToken} token={token} />} />
         <Route path='/register' element={<Register setToken={setToken} />} />
+        <Route path='/prueba' element={<PruebaPackaging setToken={setToken} />} />
+
       </Routes>
     </BrowserRouter>
   );

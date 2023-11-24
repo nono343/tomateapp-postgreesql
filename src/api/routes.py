@@ -512,6 +512,9 @@ def get_packagings():
         for packaging in packagings:
             users = [{'id': user.id, 'username': user.username} for user in packaging.users]
 
+            # Accede al nombre en español del producto a través de la relación
+            packaging.producto.nombre = packaging.producto.nombreesp if packaging.producto else None
+
             packaging_data = {
                 'id': packaging.id,
                 'nombreesp': packaging.nombreesp,
@@ -529,6 +532,7 @@ def get_packagings():
                 'foto': packaging.foto,
                 'foto2': packaging.foto2,
                 'producto_id': packaging.producto_id,
+                'nombreproducto': packaging.producto.nombre,  # Nuevo campo para el nombre del producto en español
                 'users': users,
             }
 
@@ -538,6 +542,11 @@ def get_packagings():
     except Exception as e:
         # Manejo de errores
         return jsonify({'error': str(e)}), 500
+
+
+
+
+
 
 
 # Ruta para buscar productos por nombre dentro de una categoría
@@ -654,7 +663,7 @@ def edit_packaging_users(packaging_id):
 
 
 # Nueva ruta para eliminar packagings
-@api.route('/productos/packagings/<int:packaging_id>', methods=['DELETE'])
+@api.route('/packagings/<int:packaging_id>', methods=['DELETE'])
 def delete_packaging(packaging_id):
     try:
         # Busca el packaging por ID
