@@ -57,13 +57,14 @@ function Login(props) {
     }
 
     function handleChange(event) {
-        const { value, name } = event.target
-        setloginForm(prevNote => ({
-            ...prevNote, [name]: value
-        })
-        )
-    }
-
+        const { value, name } = event.target;
+      
+        setloginForm((prevNote) => ({
+          ...prevNote,
+          [name]: name === 'username' ? value.toUpperCase() : value.trim(),
+        }));
+      }
+      
     return (
 
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">

@@ -337,19 +337,57 @@ function Admin(props) {
         'LA PALMA': 'Nombre de Marca 2',
     };
 
+    const medidasPackaging = {
+        '24*18*6': 'Medida 1',
+        '30*20*11.5': 'Medida 2',
+        '30*20*8': 'Medida 3',
+        '40*30*10': 'Medida 4',
+        '40*30*12': 'Medida 5',
+        '40*30*14': 'Medida 6',
+        '40*30*15.2': 'Medida 7',
+        '40*30*15.5': 'Medida 8',
+        '40*30*7': 'Medida 9',
+        '40*30*8': 'Medida 10',
+        '40*30*9': 'Medida 11',
+        '40*30*9.5': 'Medida 12',
+        '60*40*10': 'Medida 13',
+        '60*40*15': 'Medida 14',
+        '60*40*16': 'Medida 15',
+        '60*40*6.2': 'Medida 16',
+        '60*40*7': 'Medida 17',
+        '60*40*8': 'Medida 18',
+        '60*40*9.7': 'Medida 19'
+      };
+      
+
+    const handleNombreEspChange = (e) => {
+        const selectedNombreEsp = e.target.value;
+        console.log('selectedNombreEsp:', selectedNombreEsp);
+
+        setNombreEsp(selectedNombreEsp);
+        const selectedNombreEng = nombresMappings[selectedNombreEsp] || '';
+        setNombreEng(selectedNombreEng);
+
+        if (selectedNombreEsp === 'GRANEL') {
+            setPresentacion('1');
+            console.log('presentacion:', '1');
+        } else {
+            setPresentacion('');
+            console.log('presentacion:', '');
+        }
+    };
+
     const handleMarcaChange = (e) => {
         const selectedMarca = e.target.value;
         setMarca(selectedMarca);
     };
 
-
-    const handleNombreEspChange = (e) => {
-        const selectedNombreEsp = e.target.value;
-        setNombreEsp(selectedNombreEsp);
-
-        const selectedNombreEng = nombresMappings[selectedNombreEsp] || '';
-        setNombreEng(selectedNombreEng);
+    const handleMedidasPackagingChange = (e) => {
+        const medidasPackaging = e.target.value;
+        setTamanoCaja(medidasPackaging);
     };
+
+
 
 
     useEffect(() => {
@@ -932,7 +970,7 @@ function Admin(props) {
                             >
                                 <option value="" disabled>
 
-                                    Seleccione un nombre en español
+                                    Packaging
                                 </option>
                                 {Object.keys(nombresMappings).map((nombreEspOption) => (
                                     <option key={nombreEspOption} value={nombreEspOption}>
@@ -955,7 +993,7 @@ function Admin(props) {
                         </div>
                         <div className="form-control w-full max-w-xs">
                             <select
-                                id="name_packaging_esp"
+                                id="name_marca_esp"
                                 className="input input-bordered w-full max-w-xs"
                                 value={marca}
                                 onChange={handleMarcaChange}
@@ -963,7 +1001,7 @@ function Admin(props) {
                             >
                                 <option value="" disabled>
 
-                                    Seleccione un nombre en español
+                                    Marca
                                 </option>
                                 {Object.keys(marcasMapping).map((marcasOption) => (
                                     <option key={marcasOption} value={marcasOption}>
@@ -979,13 +1017,43 @@ function Admin(props) {
                                 id="presentacion"
                                 className="input input-bordered w-full max-w-xs"
                                 placeholder="Unidades"
+                                value={presentacion}
                                 onChange={(e) => setPresentacion(e.target.value)}
                                 required
                             />
                         </div>
                         <div className="form-control w-full max-w-xs">
-                            <input type="text" id="calibre" className="input input-bordered w-full max-w-xs" placeholder="Calibre" onChange={(e) => setCalibre(e.target.value)} required />
+                            <input
+                                type="text"
+                                id="calibre"
+                                className="input input-bordered w-full max-w-xs"
+                                placeholder="Calibre"
+                                value={calibre}
+                                onChange={(e) => setCalibre(e.target.value)}
+                                required
+                            />
                         </div>
+
+                        <div className="form-control w-full max-w-xs">
+                            <select
+                                id="calibre"
+                                className="input input-bordered w-full max-w-xs"
+                                value={tamanoCaja}
+                                onChange={handleMedidasPackagingChange}
+                                required
+                            >
+                                <option value="" disabled>
+
+                                    Tamaño de la Caja
+                                </option>
+                                {Object.keys(medidasPackaging).map((medidasOption) => (
+                                    <option key={medidasOption} value={medidasOption}>
+                                        {medidasOption}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="form-control w-full max-w-xs">
                             <input
                                 type="text"
@@ -1008,9 +1076,6 @@ function Admin(props) {
                                 readOnly
                                 disabled
                             />
-                        </div>
-                        <div className="form-control w-full max-w-xs">
-                            <input type="text" id="tamanocaja" className="input input-bordered w-full max-w-xs" placeholder="Tamaño Caja (40x30x7)" onChange={(e) => setTamanoCaja(e.target.value)} required />
                         </div>
                         <div className="form-control w-full max-w-xs">
                             <input
@@ -1117,6 +1182,8 @@ function Admin(props) {
                         <table className="table">
                             <thead>
                                 <tr>
+                                    <th>Foto Unidad</th>
+                                    <th>Foto Confección</th>
                                     <th>
                                         <select
                                             value={filters.nombreproducto}
@@ -1129,7 +1196,8 @@ function Admin(props) {
                                                     {option}
                                                 </option>
                                             ))}
-                                        </select></th>
+                                        </select>
+                                    </th>
                                     <th>
                                         <select
                                             className="border border-gray-300 px-2 py-1"
@@ -1187,6 +1255,18 @@ function Admin(props) {
                             <tbody className='text-center'>
                                 {filteredPackagings.map((packaging) => (
                                     <tr key={packaging.id}>
+                                        <td className="py-2 px-4 border-b"><img
+                                            src={`http://localhost:5000/uploads/${packaging.foto}`}
+                                            alt={packaging.nombreesp}
+                                            className="max-w-full h-auto"
+                                        />
+                                        </td>
+                                        <td className="py-2 px-4 border-b"><img
+                                            src={`http://localhost:5000/uploads/${packaging.foto2}`}
+                                            alt={packaging.nombreesp}
+                                            className="max-w-full h-auto"
+                                        />
+                                        </td>
                                         <td className="py-2 px-4 border-b">{packaging.nombreproducto}</td>
                                         <td className="py-2 px-4 border-b">{packaging.nombreesp}</td>
                                         <td className="py-2 px-4 border-b">{packaging.marca}</td>
@@ -1203,13 +1283,15 @@ function Admin(props) {
                                             {editingPackaging && editingPackaging.id === packaging.id ? (
                                                 // Mostrar checkboxes para todos los usuarios disponibles en modo de edición
                                                 allUsers.map(user => (
-                                                    <div key={user.id}>
+                                                    <div key={user.id} className="flex items-center mb-2">
                                                         <input
                                                             type="checkbox"
-                                                            checked={editedUsers.some(u => u.id === user.id)}
+                                                            checked={editedUsers.some((u) => u.id === user.id)}
                                                             onChange={() => handleUserCheckboxChange(user)}
+                                                            className="checkbox checkbox-success"
+
                                                         />
-                                                        {user.username}
+                                                        <span className="ml-2">{user.username}</span>
                                                     </div>
                                                 ))
                                             ) : (
@@ -1224,12 +1306,12 @@ function Admin(props) {
                                             {editingPackaging && editingPackaging.id === packaging.id ? (
                                                 // Mostrar botones de guardado y cancelación durante la edición
                                                 <>
-                                                    <button onClick={handleSaveUsers}>Guardar</button>
-                                                    <button onClick={handleCancelEdit}>Cancelar</button>
+                                                    <button className="btn btn-outline btn-success mb-1" onClick={handleSaveUsers}>Guardar</button>
+                                                    <button className="btn btn-outline btn-error" onClick={handleCancelEdit}>Cancelar</button>
                                                 </>
                                             ) : (
                                                 // Mostrar botón de editar en modo de visualización normal
-                                                <button onClick={() => handleEditUsers(packaging)}>Editar Usuarios</button>
+                                                <button className="btn btn-outline btn-warning" onClick={() => handleEditUsers(packaging)}>Editar Usuarios</button>
                                             )}
                                         </td>
 

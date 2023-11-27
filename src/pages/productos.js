@@ -1,15 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import { XIcon as XMarkIcon } from '@heroicons/react/outline';
 import { jwtDecode as jwt_decode } from 'jwt-decode';
+import logo from '../assets/LaPalma.png'
 
 const DetalleProducto = (props) => {
     const { categoria_id, producto_id } = useParams();
     const [producto, setProducto] = useState(null);
-    const [sortOrder, setSortOrder] = useState('asc');
-    const [isImageEnlarged, setIsImageEnlarged] = useState(false);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [filters, setFilters] = useState({
+        nombreesp: '',
+        calibre: '',
+        marca: '',
+        nombreproducto: ''
+    });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const openModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const openImageModal = (imageUrl) => {
+        document.getElementById('image_modal').showModal();
+        // Set the source of the modal image to the selected image
+        document.getElementById('modal_image').src = imageUrl;
+    };
+
 
     // Obtener el token del prop si está definido
     const token = props.token;
@@ -17,10 +36,11 @@ const DetalleProducto = (props) => {
     // Decodificar el token para acceder a sus campos
     const decodedToken = token ? jwt_decode(token) : null;
 
+    const userId = decodedToken && decodedToken.sub;
+
     useEffect(() => {
         console.log('isSpanish changed:', props.isSpanish);
     }, [props.isSpanish]);
-
 
     useEffect(() => {
         const fetchProductoPorId = async () => {
@@ -37,37 +57,32 @@ const DetalleProducto = (props) => {
     }, [categoria_id, producto_id]);
 
     if (!producto) {
-        return <div><span className="loading loading-ring loading-lg"></span>
-        </div>; // Puedes personalizar el indicador de carga
+        return (
+            <div>
+                <span className="loading loading-ring loading-lg"></span>
+            </div>
+        );
     }
 
-    console.log('Datos del producto:', producto);
+    const { packagings } = producto;
 
-    const userId = decodedToken && decodedToken.sub; // Reemplaza esto con la lógica real para obtener el ID del usuario actual
-
-    console.log(userId)
-    const handleSort = (column) => {
-        const sortOrderToggle = sortOrder === 'asc' ? 'desc' : 'asc';
-
-        const sortedProducts = producto.producto.packagings.sort((a, b) => {
-            const numA = parseFloat(a[column].replace(',', '.').trim());
-            const numB = parseFloat(b[column].replace(',', '.').trim());
-
-            return sortOrderToggle === 'asc' ? numA - numB : numB - numA;
-        });
-
-        setSortOrder(sortOrderToggle);
-        setProducto({ ...producto, producto: { ...producto.producto, packagings: sortedProducts } });
+    const getUniqueValues = (columnName) => {
+        const uniqueValues = new Set(packagings.map((packaging) => packaging[columnName]));
+        return Array.from(uniqueValues);
     };
 
-    const openImageModal = (index) => {
-        setSelectedImageIndex(index);
-        setIsImageEnlarged(true);
+    const handleFilterChange = (columnName, value) => {
+        setFilters({ ...filters, [columnName]: value });
     };
 
-    const closeImageModal = () => {
-        setIsImageEnlarged(false);
-    };
+    const filteredPackagings = packagings.filter((packaging) => {
+        return (
+            (filters.nombreesp === '' || packaging.nombreesp.toLowerCase().includes(filters.nombreesp.toLowerCase())) &&
+            (filters.calibre === '' || packaging.calibre.toLowerCase() === filters.calibre.toLowerCase()) &&
+            (filters.marca === '' || packaging.marca.toLowerCase().includes(filters.marca.toLowerCase())) &&
+            (filters.nombreproducto === '' || packaging.nombreproducto.toLowerCase().includes(filters.nombreproducto.toLowerCase()))
+        );
+    });
 
 
 
@@ -83,11 +98,13 @@ const DetalleProducto = (props) => {
                                     alt={producto.producto.nombreesp || ''}
                                     className="h-full w-full object-cover" />
                             </div>
-                            <div id="item2" className="carousel-item w-full">
-                                <img src={`http://localhost:5000/uploads/${producto.producto.foto2 || ''}`}
-                                    alt={producto.producto.nombreesp || ''}
-                                    className="h-full w-full object-cover" />
-                            </div>
+                            {producto.producto.foto2 !== null && (
+                                <div id="item2" className="carousel-item w-full">
+                                    <img src={`http://localhost:5000/uploads/${producto.producto.foto2}`}
+                                        alt={producto.producto.nombreesp || ''}
+                                        className="h-full w-full object-cover" />
+                                </div>
+                            )}
                             <div id="item3" className="carousel-item w-full">
                                 <img src="/images/stock/photo-1414694762283-acccc27bca85.jpg" className="w-full" />
                             </div>
@@ -97,11 +114,10 @@ const DetalleProducto = (props) => {
                         </div>
                         <div className="flex justify-center w-full py-2 gap-2">
                             <a href="#item1" className="btn btn-xs">1</a>
-                            <a href="#item2" className="btn btn-xs">2</a>
-                            <a href="#item3" className="btn btn-xs">3</a>
-                            <a href="#item4" className="btn btn-xs">4</a>
+                            {producto.producto.foto2 !== null && (
+                                <a href="#item2" className="btn btn-xs">2</a>
+                            )}
                         </div>
-
                     </div>
 
                     <div className="lg:flex-grow md:w-1/2 lg:pl-24 md:pl-16 flex flex-col md:items-start md:text-left items-center text-center animate-fade-left">
@@ -138,102 +154,133 @@ const DetalleProducto = (props) => {
                     </div>
                 </div>
             </section>
-
             <div className="border-t mx-auto border-gray-200 bg-white py-5 sm:px-6 animate-fade-up">
             </div>
             {/* Tabla de packagings */}
             <section>
-                <div className="relative overflow-x-auto shadow-md rounded-lg max-h-80 animate-fade-up">
-                    <table className="w-full text-sm text-left text-gray-500 divide-y divide-gray-200">
-                        <thead className="text-xs cursor-pointer text-white uppercase bg-gray-50">
+                <div className="overflow-x-auto">
+                    <table className="table">
+                        <thead>
                             <tr>
-                                <th scope="col" className="sticky left-0 top-0 z-10 w-1/20 px-4 sm:px-6 py-3 bg-red-600" onClick={() => handleSort('Packaging')}>
-                                    {props.isSpanish ? "Embalaje" : "Packaging"}
+                                <th>Foto Unidad</th>
+                                <th>Foto Confección</th>
+                                <th>
+                                    <select
+                                        className="border border-gray-300 px-2 py-1"
+                                        value={filters.nombreesp}
+                                        onChange={(e) => handleFilterChange('nombreesp', e.target.value)}
+                                    >
+                                        <option value="">Seleccionar</option>
+                                        {getUniqueValues('nombreesp').map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </th>
-                                {/* Resto de las columnas */}
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600" onClick={() => handleSort('Presentation')}>
-                                    {props.isSpanish ? "Unidades" : "Presentation"}
+                                <th>
+                                    <select
+                                        value={filters.marca}
+                                        onChange={(e) => handleFilterChange('marca', e.target.value)}
+                                        className="border border-gray-300 px-2 py-1"
+                                    >
+                                        <option value="">Seleccionar</option>
+                                        {getUniqueValues('marca').map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Calibre" : "Calibre"}
+                                <th>                <select
+                                    value={filters.calibre}
+                                    onChange={(e) => handleFilterChange('calibre', e.target.value)}
+                                    className="border border-gray-300 px-2 py-1"
+                                >
+                                    <option value="">Seleccionar Calibre</option>
+                                    {getUniqueValues('calibre').map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
                                 </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Peso Presentación (g)" : "Format Weight (g)"}
-                                </th>
-                                {/* Agregar títulos para todos los campos de packaging */}
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Peso Neto (kg)" : "Net Weight (kg)"}
-                                </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Tamaño Caja" : "Box Size"}
-                                </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Pallet 80x120" : "Pallet 80x120"}
-                                </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Peso Neto Pallet 80x120 (kg)" : "Net Weight Pallet 80x120 (kg)"}
-                                </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Pallet 100x120" : "Pallet 100x120"}
-                                </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Peso Neto Pallet 100x120 (kg)" : "Net Weight Pallet 100x120 (kg)"}
-                                </th>
-                                <th scope="col" className="sticky top-0 z-10 px-4 sm:px-6 py-3 bg-red-600">
-                                    {props.isSpanish ? "Foto" : "Photo"}
-                                </th>
+                                <th>Unidades</th>
+                                <th>Peso Packaging (g)</th>
+                                <th>Peso Neto Confección (kg)</th>
+                                <th>Tamaño Caja</th>
+                                <th>Unidades Pallet 80x120</th>
+                                <th>Peso Neto Pallet 80x120 (kg)</th>
+                                <th>Unidades Pallet 100x120</th>
+                                <th>Peso Neto Pallet 100x120 (kg)</th>
                             </tr>
                         </thead>
-
                         <tbody className="divide-y divide-gray-200">
-                            {producto.packagings ? (
-                                producto.packagings
-                                    .filter((packaging) => packaging.users.some(user => user.id === userId))
-                                    .map((packaging, index) => (
-                                        <tr className="bg-white" key={index}>
-                                            {/* Resto de las columnas */}
-                                            <td className="w-1/20 text-white px-4 sm:px-6 sticky left-0 py-3 bg-red-600">
-                                                {packaging.nombreesp}
-                                            </td>
-                                            {/* Resto de las columnas */}
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.presentacion}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.calibre}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.peso_presentacion_g}
-                                            </td>
-                                            {/* Agregar celdas para todos los campos de packaging */}
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.peso_neto_kg}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.tamano_caja}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.pallet_80x120}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.peso_neto_pallet_80x120_kg}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.pallet_100x120}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
-                                                {packaging.peso_neto_pallet_100x120_kg}
-                                            </td>
-                                            <td className="px-4 sm:px-6 py-3">
+                            {filteredPackagings.length > 0 ? (
+                                filteredPackagings.map((packaging, index) => (
+                                    <tr className="bg-white" key={index}>
+                                        <td className="py-2 px-4 border-b">
+                                            <img
+                                                src={`http://localhost:5000/uploads/${packaging.foto || ''}`}
+                                                alt="Packaging"
+                                                className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-full cursor-pointer"
+                                                onClick={() => openImageModal(`http://localhost:5000/uploads/${packaging.foto || ''}`)}
+
+                                            />
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.foto2 ? (
                                                 <img
-                                                    src={`http://localhost:5000/uploads/${packaging.foto || ''}`}
+                                                    src={`http://localhost:5000/uploads/${packaging.foto2}`}
                                                     alt="Packaging"
                                                     className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-full cursor-pointer"
-                                                    onClick={() => openImageModal(index)}
+                                                    onClick={() => openImageModal(`http://localhost:5000/uploads/${packaging.foto2}`)}
+
                                                 />
-                                            </td>
-                                        </tr>
-                                    ))
+                                            ) : (
+                                                // Mostrar otra imagen o el contenido que desees cuando foto2 es null
+                                                <img
+                                                    src={logo}
+                                                    alt="Otra Imagen"
+                                                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-full cursor-pointer"
+                                                />
+                                            )}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.nombreesp}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.marca}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.presentacion}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.calibre}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.peso_presentacion_g}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.peso_neto_kg}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.tamano_caja}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.pallet_80x120}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.peso_neto_pallet_80x120_kg}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.pallet_100x120}
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.peso_neto_pallet_100x120_kg}
+                                        </td>
+                                    </tr>
+                                ))
                             ) : (
                                 <tr>
                                     <td colSpan="10" className="text-center py-4">No hay datos disponibles.</td>
@@ -242,27 +289,17 @@ const DetalleProducto = (props) => {
                         </tbody>
                     </table>
                 </div>
-
-                {/* Modal de imagen */}
-                {isImageEnlarged && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-                        <div className="relative z-10">
-                            <img
-                                src={`http://localhost:5000/uploads/${producto.producto.packagings[selectedImageIndex]?.foto}`}
-                                alt="Large Packaging"
-                                className="w-full h-full max-w-screen-md sm:max-w-screen-lg object-contain cursor-pointer animate-fade"
-                                onError={(e) => console.error("Image failed to load:", e)}
-                            />
-                            <div className="absolute top-4 right-4">
-                                <XMarkIcon
-                                    className="text-red-900 w-6 h-6 cursor-pointer"
-                                    onClick={() => setIsImageEnlarged(false)}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
             </section>
+            {/* Modal */}
+            <dialog id="image_modal" className="modal">
+                <div className="modal-box">
+                    <form method="dialog">
+                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => document.getElementById('image_modal').close()}>✕</button>
+                    </form>
+                    <img id="modal_image" alt="Modal" className="w-full h-full object-cover" />
+                </div>
+            </dialog>
+
         </div>
     );
 };

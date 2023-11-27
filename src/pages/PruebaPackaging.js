@@ -345,9 +345,6 @@ function PruebaPackaging(props) {
 
 
 
-
-
-
     return (
 
         <div className='animate-flip-down max-w-screen-xl mx-auto px-10'>
