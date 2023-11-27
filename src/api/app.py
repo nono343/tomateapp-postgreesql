@@ -12,7 +12,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}  # Incluye la extensión 'we
 
 
 api = Flask(__name__)
-CORS(api, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(api)
 
 api.config["SECRET_KEY"] = "your_secret_key"  # Cambia esto por una clave segura
 api.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///flaskdb.db"

@@ -543,6 +543,49 @@ def get_packagings():
         # Manejo de errores
         return jsonify({'error': str(e)}), 500
 
+# Ruta para editar usuarios asociados a un packaging
+@api.route('/packagings/<int:packaging_id>/edit_users', methods=['PUT'])
+def edit_packaging_users(packaging_id):
+    try:
+        # Obtener el packaging por su ID
+        packaging = Packagings.query.get(packaging_id)
+
+        # Verificar si el packaging existe
+        if not packaging:
+            return jsonify({'error': 'Packaging no encontrado'}), 404
+
+        # Obtener datos de la solicitud JSON
+        data = request.json
+
+        # Verificar si se proporciona la lista de usuarios para actualizar
+        if 'users' in data:
+            new_users = data['users']
+
+            # Limpiar la lista actual de usuarios asociados al packaging
+            for existing_user in packaging.users:
+                packaging.users.remove(existing_user)
+
+            # Agregar nuevos usuarios al packaging
+            for user_id in new_users:
+                user = User.query.get(user_id)
+
+                # Verificar si el usuario existe
+                if user:
+                    packaging.users.append(user)
+                else:
+                    return jsonify({'error': f'Usuario con ID {user_id} no encontrado'}), 404
+
+            # Guardar los cambios en la base de datos
+            db.session.commit()
+
+            return jsonify({'message': 'Usuarios del packaging actualizados exitosamente'}), 200
+        else:
+            return jsonify({'error': 'Se requiere la lista de usuarios para actualizar'}), 400
+
+    except Exception as e:
+        # Manejo de errores
+        print(f'Error en la ruta edit_packaging_users: {e}')
+        return jsonify({'error': 'Error interno del servidor'}), 500
 
 
 
@@ -617,49 +660,6 @@ def get_product_info_by_category(categoria_id, producto_id):
     else:
         return jsonify({"error": "Categoría no encontrada"}), 404
 
-# Ruta para editar usuarios asociados a un packaging
-@api.route('/packagings/<int:packaging_id>/edit_users', methods=['PUT'])
-def edit_packaging_users(packaging_id):
-    try:
-        # Obtener el packaging por su ID
-        packaging = Packagings.query.get(packaging_id)
-
-        # Verificar si el packaging existe
-        if not packaging:
-            return jsonify({'error': 'Packaging no encontrado'}), 404
-
-        # Obtener datos de la solicitud JSON
-        data = request.json
-
-        # Verificar si se proporciona la lista de usuarios para actualizar
-        if 'users' in data:
-            new_users = data['users']
-
-            # Limpiar la lista actual de usuarios asociados al packaging
-            for existing_user in packaging.users:
-                packaging.users.remove(existing_user)
-
-            # Agregar nuevos usuarios al packaging
-            for user_id in new_users:
-                user = User.query.get(user_id)
-
-                # Verificar si el usuario existe
-                if user:
-                    packaging.users.append(user)
-                else:
-                    return jsonify({'error': f'Usuario con ID {user_id} no encontrado'}), 404
-
-            # Guardar los cambios en la base de datos
-            db.session.commit()
-
-            return jsonify({'message': 'Usuarios del packaging actualizados exitosamente'}), 200
-        else:
-            return jsonify({'error': 'Se requiere la lista de usuarios para actualizar'}), 400
-
-    except Exception as e:
-        # Manejo de errores
-        print(f'Error en la ruta edit_packaging_users: {e}')
-        return jsonify({'error': 'Error interno del servidor'}), 500
 
 
 # Nueva ruta para eliminar packagings

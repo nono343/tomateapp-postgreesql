@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import EditPackagingUsers from "./EditPackagingUsers";
+
 
 function PruebaPackaging(props) {
     const [selectedFilePackaging, setSelectedFilePackaging] = useState(null);
@@ -113,9 +113,6 @@ function PruebaPackaging(props) {
             userIds.forEach((userId) => {
                 formData.append('user_ids', userId);
             });
-
-            console.log('Datos del formulario:', formData);
-
             const response = await axios.post('http://localhost:5000/upload_packaging', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -158,12 +155,8 @@ function PruebaPackaging(props) {
 
 
     const [packagingData, setPackagingData] = useState([]);
-    const [selectedPackaging, setSelectedPackaging] = useState(null);
     const [updatedPackaging, setUpdatedPackaging] = useState(null);
     const [actualizacionProductos, setActualizacionProductos] = useState(false);
-    const [filtroProducto, setFiltroProducto] = useState('');
-    const [filtroUsuario, setFiltroUsuario] = useState('');
-    const [editedPackaging, setEditedPackaging] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -215,43 +208,20 @@ function PruebaPackaging(props) {
     };
 
 
-
-    const [isEditUsersModalOpen, setIsEditUsersModalOpen] = useState(false);
-
-    const openEditUsersModal = () => {
-        setIsEditUsersModalOpen(true);
-    };
-
-    const closeEditUsersModal = () => {
-        setIsEditUsersModalOpen(false);
-    };
-    const handleOpenEditUsersModal = (packaging) => {
-        console.log('Packaging seleccionado:', packaging);
-    
-        // Asegúrate de que packaging tenga la propiedad id
-        if (packaging && packaging.id) {
-            setSelectedPackaging(packaging);  // Actualiza el estado aquí
-            setIsEditUsersModalOpen(true);
-        } else {
-            console.error('Packaging no válido:', packaging);
-        }
-    };
-            
     const handlePackagingCheckboxChange = (id, type) => {
         const stringId = String(id);
-    
+
         if (type === 'user') {
             setUserIds((prevUserIds) =>
                 prevUserIds.includes(stringId)
                     ? prevUserIds.filter((userId) => userId !== stringId)
                     : [...prevUserIds, stringId]
             );
-            handleOpenEditUsersModal({ ...selectedPackaging, id }); // Pasa el ID del packaging al abrir el modal de edición de usuarios
         } else if (type === 'product') {
             setProductoId((prevProductId) =>
                 prevProductId === stringId ? '' : stringId
             );
-    
+
             setProductIds((prevProductIds) =>
                 prevProductIds.includes(stringId)
                     ? prevProductIds.filter((productId) => productId !== stringId)
@@ -259,7 +229,7 @@ function PruebaPackaging(props) {
             );
         }
     };
-    
+
     const [packagings, setPackagings] = useState([]);
     const [filters, setFilters] = useState({
         nombreesp: '',
@@ -300,6 +270,81 @@ function PruebaPackaging(props) {
 
         );
     });
+
+
+
+
+    const [editingPackaging, setEditingPackaging] = useState(null);
+    const [editedUsers, setEditedUsers] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);  // Nuevo estado para todos los usuarios
+
+
+    useEffect(() => {
+        // Realizar la solicitud GET para obtener los packagings
+        axios.get('http://localhost:5000/packagings')
+            .then(response => {
+                setPackagings(response.data.packagings);
+            })
+            .catch(error => {
+                console.error('Error al obtener los packagings:', error);
+            });
+        axios.get('http://localhost:5000/users')
+            .then(response => {
+                setAllUsers(response.data.users);
+            })
+            .catch(error => {
+                console.error('Error al obtener todos los usuarios:', error);
+            });
+    }, []); // Se ejecuta solo una vez al montar el componente
+
+
+    const handleEditUsers = (packaging) => {
+        setEditingPackaging(packaging);
+        setEditedUsers([...packaging.users]);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPackaging(null);
+        setEditedUsers([]);
+    };
+
+    const handleSaveUsers = async () => {
+        try {
+            // Realizar la solicitud PUT para actualizar los usuarios asociados al packaging
+            await axios.put(`http://localhost:5000/packagings/${editingPackaging.id}/edit_users`, {
+                users: editedUsers.map(user => user.id),
+            });
+
+            console.log('Usuarios del packaging actualizados exitosamente');
+
+            // Actualizar la lista de packagings después de la edición
+            axios.get('http://localhost:5000/packagings')
+                .then(response => {
+                    setPackagings(response.data.packagings);
+                });
+
+            // Restablecer el estado de edición
+            setEditingPackaging(null);
+            setEditedUsers([]);
+        } catch (error) {
+            console.error('Error al guardar los usuarios:', error);
+        }
+    };
+
+    const handleUserCheckboxChange = (user) => {
+        setEditedUsers(prevUsers => {
+            if (prevUsers.some(u => u.id === user.id)) {
+                // Usuario ya está seleccionado, quitarlo
+                return prevUsers.filter(u => u.id !== user.id);
+            } else {
+                // Usuario no está seleccionado, agregarlo
+                return [...prevUsers, user];
+            }
+        });
+    };
+
+
+
 
 
 
@@ -585,13 +630,37 @@ function PruebaPackaging(props) {
                                 <td className="py-2 px-4 border-b">{packaging.pallet_100x120}</td>
                                 <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_100x120_kg}</td>
                                 <td className="py-2 px-4 border-b">
-                                    {packaging.users.map((user) => (
-                                        <div key={user.id}>{user.username}</div>
-                                    ))}</td>
+                                    {editingPackaging && editingPackaging.id === packaging.id ? (
+                                        // Mostrar checkboxes para todos los usuarios disponibles en modo de edición
+                                        allUsers.map(user => (
+                                            <div key={user.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editedUsers.some(u => u.id === user.id)}
+                                                    onChange={() => handleUserCheckboxChange(user)}
+                                                />
+                                                {user.username}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        // Mostrar solo los usuarios asociados en modo de visualización normal
+                                        packaging.users.map(user => (
+                                            <div key={user.id}>{user.username}</div>
+                                        ))
+                                    )}
+                                </td>
+
                                 <td className="py-2 px-4 border-b">
-                                    <button onClick={openEditUsersModal} type="button" className="btn btn-outline btn-primary">
-                                        Editar Usuarios
-                                    </button>
+                                    {editingPackaging && editingPackaging.id === packaging.id ? (
+                                        // Mostrar botones de guardado y cancelación durante la edición
+                                        <>
+                                            <button onClick={handleSaveUsers}>Guardar</button>
+                                            <button onClick={handleCancelEdit}>Cancelar</button>
+                                        </>
+                                    ) : (
+                                        // Mostrar botón de editar en modo de visualización normal
+                                        <button onClick={() => handleEditUsers(packaging)}>Editar Usuarios</button>
+                                    )}
                                 </td>
 
                                 <td className="py-2 px-4 border-b">
@@ -602,20 +671,11 @@ function PruebaPackaging(props) {
                                         Eliminar
                                     </button>
                                 </td>
-
                             </tr>
                         ))}
-
                     </tbody>
                 </table>
             </div>
-            {isEditUsersModalOpen && (
-                <EditPackagingUsers
-                    packaging={selectedPackaging} // Asegúrate de pasar el packaging adecuado
-                    onUpdate={closeEditUsersModal} // Cierra el modal después de la actualización
-                />
-            )}
-
         </div>
     )
 }

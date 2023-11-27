@@ -295,7 +295,6 @@ function Admin(props) {
 
     };
 
-
     const [selectedFilePackaging, setSelectedFilePackaging] = useState(null);
     const [selectedFilePackaging2, setSelectedFilePackaging2] = useState(null); // Added for the second file
     const [nombreesp, setNombreEsp] = useState('');
@@ -382,29 +381,6 @@ function Admin(props) {
     };
 
 
-    const handlePackagingCheckboxChange = (id, type) => {
-        const stringId = String(id); // Convertir el ID a cadena
-
-        if (type === 'user') {
-            setUserIds((prevUserIds) =>
-                prevUserIds.includes(stringId)
-                    ? prevUserIds.filter((userId) => userId !== stringId)
-                    : [...prevUserIds, stringId]
-            );
-        } else if (type === 'product') {
-            // Actualizar el estado de productoId
-            setProductoId((prevProductId) =>
-                prevProductId === stringId ? '' : stringId
-            );
-
-            // Actualizar el estado de productIds si es necesario
-            setProductIds((prevProductIds) =>
-                prevProductIds.includes(stringId)
-                    ? prevProductIds.filter((productId) => productId !== stringId)
-                    : [...prevProductIds, stringId]
-            );
-        }
-    };
     const handleSubmit = async (event) => {
         event.preventDefault();
 
@@ -429,9 +405,6 @@ function Admin(props) {
             userIds.forEach((userId) => {
                 formData.append('user_ids', userId);
             });
-
-            console.log('Datos del formulario:', formData);
-
             const response = await axios.post('http://localhost:5000/upload_packaging', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -456,8 +429,6 @@ function Admin(props) {
     };
 
 
-
-
     const handlePesoNetoCalculo = () => {
         // Verifica que ambos campos tengan valores numéricos antes de calcular
         if (!isNaN(presentacion) && !isNaN(pesoPresentacion)) {
@@ -476,12 +447,8 @@ function Admin(props) {
 
 
     const [packagingData, setPackagingData] = useState([]);
-    const [selectedPackaging, setSelectedPackaging] = useState(null);
     const [updatedPackaging, setUpdatedPackaging] = useState(null);
     const [actualizacionProductos, setActualizacionProductos] = useState(false);
-    const [filtroProducto, setFiltroProducto] = useState('');
-    const [filtroUsuario, setFiltroUsuario] = useState('');
-    const [editedPackaging, setEditedPackaging] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -518,6 +485,42 @@ function Admin(props) {
         }
     }, [actualizacionProductos]);
 
+
+    const handleDeletePackaging = async (packagingId) => {
+        try {
+            const response = await axios.delete(`http://localhost:5000/packagings/${packagingId}`);
+            if (response.status === 200) {
+                // Recargar los datos después de una eliminación exitosa
+                fetchData();
+            }
+        } catch (error) {
+            console.error('Error al eliminar el packaging:', error.response.data.error);
+            // Manejar el error según sea necesario
+        }
+    };
+
+
+    const handlePackagingCheckboxChange = (id, type) => {
+        const stringId = String(id);
+
+        if (type === 'user') {
+            setUserIds((prevUserIds) =>
+                prevUserIds.includes(stringId)
+                    ? prevUserIds.filter((userId) => userId !== stringId)
+                    : [...prevUserIds, stringId]
+            );
+        } else if (type === 'product') {
+            setProductoId((prevProductId) =>
+                prevProductId === stringId ? '' : stringId
+            );
+
+            setProductIds((prevProductIds) =>
+                prevProductIds.includes(stringId)
+                    ? prevProductIds.filter((productId) => productId !== stringId)
+                    : [...prevProductIds, stringId]
+            );
+        }
+    };
 
     const [packagings, setPackagings] = useState([]);
     const [filters, setFilters] = useState({
@@ -559,6 +562,78 @@ function Admin(props) {
 
         );
     });
+
+
+
+
+    const [editingPackaging, setEditingPackaging] = useState(null);
+    const [editedUsers, setEditedUsers] = useState([]);
+    const [allUsers, setAllUsers] = useState([]);  // Nuevo estado para todos los usuarios
+
+
+    useEffect(() => {
+        // Realizar la solicitud GET para obtener los packagings
+        axios.get('http://localhost:5000/packagings')
+            .then(response => {
+                setPackagings(response.data.packagings);
+            })
+            .catch(error => {
+                console.error('Error al obtener los packagings:', error);
+            });
+        axios.get('http://localhost:5000/users')
+            .then(response => {
+                setAllUsers(response.data.users);
+            })
+            .catch(error => {
+                console.error('Error al obtener todos los usuarios:', error);
+            });
+    }, []); // Se ejecuta solo una vez al montar el componente
+
+
+    const handleEditUsers = (packaging) => {
+        setEditingPackaging(packaging);
+        setEditedUsers([...packaging.users]);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPackaging(null);
+        setEditedUsers([]);
+    };
+
+    const handleSaveUsers = async () => {
+        try {
+            // Realizar la solicitud PUT para actualizar los usuarios asociados al packaging
+            await axios.put(`http://localhost:5000/packagings/${editingPackaging.id}/edit_users`, {
+                users: editedUsers.map(user => user.id),
+            });
+
+            console.log('Usuarios del packaging actualizados exitosamente');
+
+            // Actualizar la lista de packagings después de la edición
+            axios.get('http://localhost:5000/packagings')
+                .then(response => {
+                    setPackagings(response.data.packagings);
+                });
+
+            // Restablecer el estado de edición
+            setEditingPackaging(null);
+            setEditedUsers([]);
+        } catch (error) {
+            console.error('Error al guardar los usuarios:', error);
+        }
+    };
+
+    const handleUserCheckboxChange = (user) => {
+        setEditedUsers(prevUsers => {
+            if (prevUsers.some(u => u.id === user.id)) {
+                // Usuario ya está seleccionado, quitarlo
+                return prevUsers.filter(u => u.id !== user.id);
+            } else {
+                // Usuario no está seleccionado, agregarlo
+                return [...prevUsers, user];
+            }
+        });
+    };
 
 
     return (
@@ -1125,15 +1200,51 @@ function Admin(props) {
                                         <td className="py-2 px-4 border-b">{packaging.pallet_100x120}</td>
                                         <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_100x120_kg}</td>
                                         <td className="py-2 px-4 border-b">
-                                            {packaging.users.map((user) => (
-                                                <div key={user.id}>{user.username}</div>
-                                            ))}</td>
+                                            {editingPackaging && editingPackaging.id === packaging.id ? (
+                                                // Mostrar checkboxes para todos los usuarios disponibles en modo de edición
+                                                allUsers.map(user => (
+                                                    <div key={user.id}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editedUsers.some(u => u.id === user.id)}
+                                                            onChange={() => handleUserCheckboxChange(user)}
+                                                        />
+                                                        {user.username}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                // Mostrar solo los usuarios asociados en modo de visualización normal
+                                                packaging.users.map(user => (
+                                                    <div key={user.id}>{user.username}</div>
+                                                ))
+                                            )}
+                                        </td>
+
+                                        <td className="py-2 px-4 border-b">
+                                            {editingPackaging && editingPackaging.id === packaging.id ? (
+                                                // Mostrar botones de guardado y cancelación durante la edición
+                                                <>
+                                                    <button onClick={handleSaveUsers}>Guardar</button>
+                                                    <button onClick={handleCancelEdit}>Cancelar</button>
+                                                </>
+                                            ) : (
+                                                // Mostrar botón de editar en modo de visualización normal
+                                                <button onClick={() => handleEditUsers(packaging)}>Editar Usuarios</button>
+                                            )}
+                                        </td>
+
+                                        <td className="py-2 px-4 border-b">
+                                            <button
+                                                onClick={() => handleDeletePackaging(packaging.id)}
+                                                className="btn btn-outline btn-danger"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
-
                             </tbody>
                         </table>
-
                     </div>
                 </div>
             )}
