@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios'; // Importa la biblioteca Axios
 
 const ProductSearch = ({ isSpanish, setIsSearching }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,16 +11,16 @@ const ProductSearch = ({ isSpanish, setIsSearching }) => {
     setSearchTerm(term);
 
     try {
-        const response = await fetch(`http://localhost:5000/productos?nombre=${term}`);
-        const data = await response.json();
-        setSearchResults(data.products);
-        setIsSearching(!!term.trim()); // true if there is a search term, false otherwise
-      } catch (error) {
-        console.error('Error al realizar la búsqueda:', error);
-      }
-    };
-  
-  
+      const response = await axios.get(`http://localhost:5000/productos?nombre=${term}`);
+      const data = response.data; 
+      setSearchResults(data.products);
+      setIsSearching(!!term.trim()); 
+    } catch (error) {
+      console.error('Error al realizar la búsqueda:', error);
+    }
+  };
+
+
   return (
     <div className='py-5 px-10'>
       <div className="form-control w-full max-w-sm mx-auto">
@@ -40,11 +41,11 @@ const ProductSearch = ({ isSpanish, setIsSearching }) => {
                   key={product.id}
                   to={`/categorias/${product.categoria_id}/productos/${product.id}`}
                   onClick={() => console.log(product.id)}
-                  className="group space-y-1 border border-gray-100 dark:border-gray-700 rounded-3xl bg-white dark:bg-gray-800 px-8 py-12 text-center shadow-2xl shadow-gray-600/10 dark:shadow-none transition-transform transform hover:scale-105 duration-500 ease-in-out hover:shadow-2xl hover:border-red-400"
+                  className="group space-y-1 border border-gray-100 dark:border-gray-700 rounded-3xl bg-white dark:bg-gray-800 px-8 py-12 text-center shadow-2xl shadow-gray-600/10 dark:shadow-none transition-transform transform hover:scale-105 duration-500 ease-in-out hover:shadow-2xl hover:border-green-400"
                 >
                   <img
                     className="mx-auto w-120"
-                    src={`http://localhost:5000/uploads/${product.foto}`}
+                    src={product.foto_url}
                     alt={isSpanish ? product.nombreesp : product.nombreeng}
                     loading="lazy"
                   />

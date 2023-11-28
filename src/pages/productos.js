@@ -42,6 +42,7 @@ const DetalleProducto = (props) => {
         console.log('isSpanish changed:', props.isSpanish);
     }, [props.isSpanish]);
 
+    console.log(producto)
     useEffect(() => {
         const fetchProductoPorId = async () => {
             try {
@@ -80,7 +81,8 @@ const DetalleProducto = (props) => {
             (filters.nombreesp === '' || packaging.nombreesp.toLowerCase().includes(filters.nombreesp.toLowerCase())) &&
             (filters.calibre === '' || packaging.calibre.toLowerCase() === filters.calibre.toLowerCase()) &&
             (filters.marca === '' || packaging.marca.toLowerCase().includes(filters.marca.toLowerCase())) &&
-            (filters.nombreproducto === '' || packaging.nombreproducto.toLowerCase().includes(filters.nombreproducto.toLowerCase()))
+            (filters.nombreproducto === '' || packaging.nombreproducto.toLowerCase().includes(filters.nombreproducto.toLowerCase())) &&
+            (userId && packaging.users && packaging.users.some(user => user.id === userId))
         );
     });
 
@@ -93,33 +95,36 @@ const DetalleProducto = (props) => {
                 <div className="container mx-auto flex px-5 md:flex-row flex-col items-center">
                     <div className="lg:max-w-lg lg:w-full md:w-1/2 w-5/6 mb-10 md:mb-0 animate-fade-right">
                         <div className="carousel w-full">
-                            <div id="item1" className="carousel-item w-full">
-                                <img src={`http://localhost:5000/uploads/${producto.producto.foto || ''}`}
-                                    alt={producto.producto.nombreesp || ''}
-                                    className="h-full w-full object-cover" />
-                            </div>
-                            {producto.producto.foto2 !== null && (
-                                <div id="item2" className="carousel-item w-full">
-                                    <img src={`http://localhost:5000/uploads/${producto.producto.foto2}`}
+                            {producto.producto.foto && (
+                                <div id="item1" className="carousel-item w-full">
+                                    <img
+                                        src={producto.producto.foto_url}  // Usa la propiedad foto_url en lugar de construir la URL manualmente
                                         alt={producto.producto.nombreesp || ''}
-                                        className="h-full w-full object-cover" />
+                                        className="h-full w-full object-cover"
+                                    />
                                 </div>
                             )}
-                            <div id="item3" className="carousel-item w-full">
-                                <img src="/images/stock/photo-1414694762283-acccc27bca85.jpg" className="w-full" />
-                            </div>
-                            <div id="item4" className="carousel-item w-full">
-                                <img src="/images/stock/photo-1665553365602-b2fb8e5d1707.jpg" className="w-full" />
-                            </div>
+                            {producto.producto.foto2 && (
+                                <div id="item2" className="carousel-item w-full">
+                                    <img
+                                        src={producto.producto.foto2_url}  // Usa la propiedad foto2_url en lugar de construir la URL manualmente
+                                        alt={producto.producto.nombreesp || ''}
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                            )}
+                            {/* Agrega más elementos del carrusel según sea necesario */}
                         </div>
                         <div className="flex justify-center w-full py-2 gap-2">
-                            <a href="#item1" className="btn btn-xs">1</a>
-                            {producto.producto.foto2 !== null && (
+                            {producto.producto.foto && (
+                                <a href="#item1" className="btn btn-xs">1</a>
+                            )}
+                            {producto.producto.foto2 && (
                                 <a href="#item2" className="btn btn-xs">2</a>
                             )}
+                            {/* Agrega más enlaces del carrusel según sea necesario */}
                         </div>
                     </div>
-
                     <div className="lg:flex-grow md:w-1/2 lg:pl-24 md:pl-16 flex flex-col md:items-start md:text-left items-center text-center animate-fade-left">
                         <h1 className="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-900">
                             {props.isSpanish ? producto.producto.nombreesp : producto.producto.nombreeng}
@@ -216,29 +221,27 @@ const DetalleProducto = (props) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {filteredPackagings.length > 0 ? (
+                        {filteredPackagings.length > 0 ? (
                                 filteredPackagings.map((packaging, index) => (
                                     <tr className="bg-white" key={index}>
                                         <td className="py-2 px-4 border-b">
                                             <img
-                                                src={`http://localhost:5000/uploads/${packaging.foto || ''}`}
+                                                src={packaging.foto_url || ''}
                                                 alt="Packaging"
                                                 className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-full cursor-pointer"
-                                                onClick={() => openImageModal(`http://localhost:5000/uploads/${packaging.foto || ''}`)}
-
+                                                onClick={() => openImageModal(packaging.foto_url || '')}
                                             />
                                         </td>
                                         <td className="py-2 px-4 border-b">
-                                            {packaging.foto2 ? (
+                                            {packaging.foto2_url ? (
                                                 <img
-                                                    src={`http://localhost:5000/uploads/${packaging.foto2}`}
+                                                    src={packaging.foto2_url}
                                                     alt="Packaging"
                                                     className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-full cursor-pointer"
-                                                    onClick={() => openImageModal(`http://localhost:5000/uploads/${packaging.foto2}`)}
-
+                                                    onClick={() => openImageModal(packaging.foto2_url)}
                                                 />
                                             ) : (
-                                                // Mostrar otra imagen o el contenido que desees cuando foto2 es null
+                                                // Mostrar otra imagen o el contenido que desees cuando foto2_url es null
                                                 <img
                                                     src={logo}
                                                     alt="Otra Imagen"
@@ -253,10 +256,11 @@ const DetalleProducto = (props) => {
                                             {packaging.marca}
                                         </td>
                                         <td className="py-2 px-4 border-b">
-                                            {packaging.presentacion}
-                                        </td>
-                                        <td className="py-2 px-4 border-b">
                                             {packaging.calibre}
+                                        </td>
+
+                                        <td className="py-2 px-4 border-b">
+                                            {packaging.presentacion}
                                         </td>
                                         <td className="py-2 px-4 border-b">
                                             {packaging.peso_presentacion_g}

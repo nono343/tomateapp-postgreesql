@@ -41,6 +41,7 @@ class Categorias(db.Model):
     foto = db.Column(db.String(120), nullable=False)
     productos = db.relationship('Productos', backref='categoria', cascade='all, delete-orphan')
 
+
     def __init__(self, nombreesp, nombreeng, foto):
         self.nombreesp = nombreesp
         self.nombreeng = nombreeng
@@ -71,7 +72,9 @@ class Productos(db.Model):
     foto = db.Column(db.String(120), nullable=False)
     foto2 = db.Column(db.String(120), nullable=True)
     meses_produccion = db.relationship('MesesProduccion', backref='producto', cascade='all, delete-orphan')
+    categoria_nombreesp_rel = db.relationship('Categorias', backref=db.backref('productos_rel', lazy=True))
     packagings = db.relationship('Packagings', backref='producto', cascade='all, delete-orphan')
+
 
     def __init__(self, nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, foto, foto2):
         self.nombreesp = nombreesp
@@ -90,6 +93,7 @@ class Productos(db.Model):
             'descripcionesp': self.descripcionesp,
             'descripcioneng': self.descripcioneng,
             'categoria_id': self.categoria_id,
+            'categoria_nombreesp': self.categoria.nombreesp,  # New field
             'foto': self.foto,
             'foto2': self.foto2,
             # Otros campos si es necesario
@@ -142,6 +146,10 @@ class Packagings(db.Model):
 
     producto_id = db.Column(db.Integer, db.ForeignKey('productos.id', name='fk_packagings_producto_id', ondelete='CASCADE'), nullable=False)
 
+    categoria_id = db.Column(db.Integer, nullable=False)  # Nueva columna para el ID de la categoría
+    categoria_nombreesp = db.Column(db.String(80), nullable=False)  # Nueva columna para el nombre de la categoría
+    producto_nombreesp = db.Column(db.String(80), nullable=False)  # Nueva columna para el nombre del producto
+
     def __init__(self, nombreesp, nombreeng, marca, presentacion, calibre, peso_presentacion_g, peso_neto_kg,
                  tamano_caja, pallet_80x120, peso_neto_pallet_80x120_kg, pallet_100x120,
                  peso_neto_pallet_100x120_kg, foto, foto2, producto_id):
@@ -159,8 +167,14 @@ class Packagings(db.Model):
         self.peso_neto_pallet_100x120_kg = peso_neto_pallet_100x120_kg
         self.foto = foto
         self.foto2 = foto2
-
         self.producto_id = producto_id
+
+        # Automatiza la asignación de la categoría del producto al packaging
+        producto = Productos.query.get(producto_id)
+        if producto:
+            self.categoria_id = producto.categoria_id
+            self.categoria_nombreesp = producto.categoria.nombreesp
+            self.producto_nombreesp = producto.nombreesp
 
     def serialize(self):
         return {
@@ -179,10 +193,11 @@ class Packagings(db.Model):
             'peso_neto_pallet_100x120_kg': self.peso_neto_pallet_100x120_kg,
             'foto': self.foto,
             'foto2': self.foto2,
-
             'producto_id': self.producto_id,
-            'users': [user.serialize() for user in self.users],  # Agrega esta línea
-
+            'categoria_id': self.categoria_id,
+            'categoria_nombreesp': self.categoria_nombreesp,
+            'producto_nombreesp': self.producto_nombreesp,
+            'users': [user.serialize() for user in self.users],
             # Otros campos si es necesario
         }
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import EditPackagingUsers from './EditPackagingUsers';
 
 function Admin(props) {
     const [profileData, setProfileData] = useState(null)
@@ -20,7 +19,6 @@ function Admin(props) {
             }
         })
             .then((response) => {
-                console.log(response)
                 const res = response.data
                 res.access_token && props.setToken(res.access_token)
                 setProfileData(({
@@ -29,9 +27,6 @@ function Admin(props) {
                 }))
             }).catch((error) => {
                 if (error.response) {
-                    console.log(error.response)
-                    console.log(error.response.status)
-                    console.log(error.response.headers)
                 }
             })
     }
@@ -56,7 +51,6 @@ function Admin(props) {
         })
             .then((response) => {
                 setCategories(response.data.categories);
-                console.log('Respuesta del servidor:', response);
             })
             .catch((error) => {
                 console.error('Error al obtener las categorías', error);
@@ -88,8 +82,11 @@ function Admin(props) {
                         'Content-Type': 'multipart/form-data',
                     },
                 });
+
                 if (response.status === 200) {
                     setUploadedFileNameCategory(response.data.message);
+
+                    // Actualizar la lista de categorías después de cargar
                     axios.get('http://localhost:5000/categorias')
                         .then((response) => {
                             setCategories(response.data.categories);
@@ -103,9 +100,10 @@ function Admin(props) {
             } catch (error) {
                 console.error('Error al cargar la categoría con foto', error);
             }
+        } else {
+            console.error('Todos los campos son obligatorios');
         }
     };
-
 
     const handleDeleteCategory = async (id) => {
         try {
@@ -151,6 +149,7 @@ function Admin(props) {
             .then(response => setProducts(response.data.products))
             .catch(error => console.error('Error al obtener la lista de productos:', error));
     }, []);
+
 
     const handleFileChangeProduct = (event) => {
         setSelectedFileProduct(event.target.files[0]);
@@ -209,7 +208,6 @@ function Admin(props) {
                 }
             } catch (error) {
                 console.error('Error al cargar el producto con foto', error);
-                console.log(error.response.data);
             }
         }
     };
@@ -272,8 +270,6 @@ function Admin(props) {
         try {
             const response = await axios.post(`http://localhost:5000/productos/${productId}/meses/agregar`, { meses: selectedMonths });
 
-            console.log('Respuesta del servidor:', response.data);
-            console.log('Meses de producción agregados con éxito', response.data);
 
             // Actualizar la lista de productos después de agregar meses
             axios.get('http://localhost:5000/productos')
@@ -357,12 +353,25 @@ function Admin(props) {
         '60*40*7': 'Medida 17',
         '60*40*8': 'Medida 18',
         '60*40*9.7': 'Medida 19'
-      };
-      
+    };
+
+    const calibreMapping = {
+        'P': 'Medida 1',
+        'M': 'Medida 2',
+        'G': 'Medida 3',
+        'GG': 'Medida 4',
+        'GGG': 'Medida 5',
+        '16': 'Medida 6',
+        '14': 'Medida 7',
+        '12P': 'Medida 8',
+        '12M': 'Medida 9',
+        '12G': 'Medida 10',
+    };
+
+
 
     const handleNombreEspChange = (e) => {
         const selectedNombreEsp = e.target.value;
-        console.log('selectedNombreEsp:', selectedNombreEsp);
 
         setNombreEsp(selectedNombreEsp);
         const selectedNombreEng = nombresMappings[selectedNombreEsp] || '';
@@ -370,10 +379,8 @@ function Admin(props) {
 
         if (selectedNombreEsp === 'GRANEL') {
             setPresentacion('1');
-            console.log('presentacion:', '1');
         } else {
             setPresentacion('');
-            console.log('presentacion:', '');
         }
     };
 
@@ -385,6 +392,11 @@ function Admin(props) {
     const handleMedidasPackagingChange = (e) => {
         const medidasPackaging = e.target.value;
         setTamanoCaja(medidasPackaging);
+    };
+
+    const handleCalibreChange = (e) => {
+        const calibreMapping = e.target.value;
+        setCalibre(calibreMapping);
     };
 
 
@@ -407,7 +419,6 @@ function Admin(props) {
     }, []);
 
     useEffect(() => {
-        console.log('Usuarios actualizados:', availableUsers);
     }, [availableUsers]);
 
     const handleFileChange1 = (event) => {
@@ -457,9 +468,6 @@ function Admin(props) {
                 // Cambia el estado para activar la actualización de filteredPackagings
                 setActualizacionProductos(true);
             }
-
-            console.log(response.data.message);
-            // Realizar acciones adicionales después de la carga exitosa
         } catch (error) {
             console.error('Error en la carga del embalaje:', error.response.data.error);
             // Manejar el error según sea necesario
@@ -494,7 +502,6 @@ function Admin(props) {
                 const response = await axios.get('http://localhost:5000/productos');
                 const data = response.data.products;
                 setPackagingData(data);
-                console.log('Packagings:', data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -506,8 +513,6 @@ function Admin(props) {
 
     // UseEffect para recargar datos cuando actualizacionProductos cambia
     useEffect(() => {
-        console.log('Efecto de actualización de productos ejecutado');
-        console.log('Productos después de la actualización:', packagingData);
         if (actualizacionProductos) {
             // Fetch the updated list of products right after successful upload
             axios.get('http://localhost:5000/productos')
@@ -568,15 +573,16 @@ function Admin(props) {
         nombreproducto: ''
     });
 
+
     useEffect(() => {
         fetchData();
     }, []);
 
+    console.log(packagings)
     const fetchData = async () => {
         try {
             const response = await axios.get('http://localhost:5000/packagings');
             setPackagings(response.data.packagings);
-            console.log(response.data.packagings)
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -618,6 +624,8 @@ function Admin(props) {
             .catch(error => {
                 console.error('Error al obtener los packagings:', error);
             });
+        
+        // Realizar la solicitud GET para obtener todos los usuarios
         axios.get('http://localhost:5000/users')
             .then(response => {
                 setAllUsers(response.data.users);
@@ -626,8 +634,7 @@ function Admin(props) {
                 console.error('Error al obtener todos los usuarios:', error);
             });
     }, []); // Se ejecuta solo una vez al montar el componente
-
-
+    
     const handleEditUsers = (packaging) => {
         setEditingPackaging(packaging);
         setEditedUsers([...packaging.users]);
@@ -645,7 +652,6 @@ function Admin(props) {
                 users: editedUsers.map(user => user.id),
             });
 
-            console.log('Usuarios del packaging actualizados exitosamente');
 
             // Actualizar la lista de packagings después de la edición
             axios.get('http://localhost:5000/packagings')
@@ -745,7 +751,7 @@ function Admin(props) {
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
                                                             <img
-                                                                src={`http://localhost:5000/uploads/${category.foto}`}
+                                                                src={`http://localhost:5000/uploads/${category.nombreesp}/${category.foto}`}
                                                                 alt={category.nombreesp}
                                                                 className="max-w-full h-auto"
                                                             />
@@ -912,7 +918,7 @@ function Admin(props) {
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
                                                             <img
-                                                                src={`http://localhost:5000/uploads/${product.foto}`}
+                                                                src={`http://localhost:5000/uploads/${product.categoria_nombreesp}/${product.nombreesp}/${product.foto}`}
                                                                 alt={product.nombreesp}
                                                             />
                                                         </div>
@@ -926,7 +932,7 @@ function Admin(props) {
                                                     <div className="avatar">
                                                         <div className="mask mask-squircle w-12 h-12">
                                                             <img
-                                                                src={`http://localhost:5000/uploads/${product.foto2}`}
+                                                                src={`http://localhost:5000/uploads/${product.categoria_nombreesp}/${product.nombreesp}/${product.foto2}`}
                                                                 alt={product.nombreesp}
                                                             />
                                                         </div>
@@ -1023,20 +1029,28 @@ function Admin(props) {
                             />
                         </div>
                         <div className="form-control w-full max-w-xs">
-                            <input
-                                type="text"
+                            <select
                                 id="calibre"
                                 className="input input-bordered w-full max-w-xs"
-                                placeholder="Calibre"
                                 value={calibre}
-                                onChange={(e) => setCalibre(e.target.value)}
+                                onChange={handleCalibreChange}
                                 required
-                            />
+                            >
+                                <option value="" disabled>
+
+                                    Calibre
+                                </option>
+                                {Object.keys(calibreMapping).map((calibresOption) => (
+                                    <option key={calibresOption} value={calibresOption}>
+                                        {calibresOption}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="form-control w-full max-w-xs">
                             <select
-                                id="calibre"
+                                id="tamanocaja"
                                 className="input input-bordered w-full max-w-xs"
                                 value={tamanoCaja}
                                 onChange={handleMedidasPackagingChange}
@@ -1256,13 +1270,13 @@ function Admin(props) {
                                 {filteredPackagings.map((packaging) => (
                                     <tr key={packaging.id}>
                                         <td className="py-2 px-4 border-b"><img
-                                            src={`http://localhost:5000/uploads/${packaging.foto}`}
+                                            src={packaging.foto}
                                             alt={packaging.nombreesp}
                                             className="max-w-full h-auto"
                                         />
                                         </td>
                                         <td className="py-2 px-4 border-b"><img
-                                            src={`http://localhost:5000/uploads/${packaging.foto2}`}
+                                            src={packaging.foto2}
                                             alt={packaging.nombreesp}
                                             className="max-w-full h-auto"
                                         />

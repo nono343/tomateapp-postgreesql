@@ -15,14 +15,17 @@ from models import User,Categorias, Productos,MesesProduccion , Packagings
 from util import allowed_file  # Importa la función allowed_file desde util.py
 from flask import send_from_directory
 
+
+
 @api.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
 
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+# Ruta para servir archivos estáticos (actualizada)
+@api.route('/uploads/<filename>')
+def uploaded_file_user(filename):
+    return send_from_directory(api.config['UPLOAD_FOLDER'], filename)
 
-
-from flask_jwt_extended import create_access_token
 
 @api.route('/logintoken', methods=["POST"])
 def create_token():
@@ -150,24 +153,23 @@ def my_profile(getusername):
 @api.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
+        return jsonify({'error': 'No file part'}), 400
+
     file = request.files['file']
     if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
+        return jsonify({'error': 'No selected file'}), 400
+
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(os.path.abspath(api.config['UPLOAD_FOLDER']), filename))
-        return "File uploaded successfully"  # Puedes personalizar este mensaje
+        return jsonify({'message': 'File uploaded successfully'}), 200
     else:
-        flash('Invalid file type')
-        return redirect(request.url)
+        return jsonify({'error': 'Invalid file type'}), 400
 
-@api.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(api.config['UPLOAD_FOLDER'], filename)
-
+# Ruta para servir archivos estáticos
+@api.route('/uploads/<categoria>/<filename>')
+def uploaded_categoria_file(categoria, filename):
+    return send_from_directory(api.config['UPLOAD_FOLDER'], f'{categoria}/{filename}')
 
 @api.route('/upload_category', methods=['POST'])
 def upload_category():
@@ -183,8 +185,12 @@ def upload_category():
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(os.path.abspath(api.config['UPLOAD_FOLDER']), filename))
-
+        
+        # Crear un directorio basado en el nombre de la categoría si no existe
+        categoria_folder = os.path.join(api.config['UPLOAD_FOLDER'], nombreesp)
+        os.makedirs(categoria_folder, exist_ok=True)
+        
+        file.save(os.path.join(categoria_folder, filename))
 
         # Aquí puedes guardar la categoría con la foto en tu base de datos en la tabla Categorias
         nueva_categoria = Categorias(nombreesp=nombreesp, nombreeng=nombreeng, foto=filename)
@@ -213,8 +219,6 @@ def get_categories():
     return jsonify(categories=category_list)
 
 
-
-
 @api.route('/categorias/<int:categoria_id>', methods=['GET'])
 def get_category_by_id(categoria_id):
     try:
@@ -229,7 +233,7 @@ def get_category_by_id(categoria_id):
             'id': category.id,
             'nombreesp': category.nombreesp,
             'nombreeng': category.nombreeng,
-            'foto': category.foto
+            'foto': category.foto  # Este es el nombre del archivo de la foto
             # Puedes agregar más campos según tus necesidades
         }
 
@@ -240,6 +244,8 @@ def get_category_by_id(categoria_id):
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 
+import os
+
 @api.route('/categorias/<int:id>', methods=['DELETE'])
 def delete_categoria(id):
     # Buscar la categoría por ID
@@ -248,15 +254,24 @@ def delete_categoria(id):
     if categoria is None:
         return jsonify({'message': 'Categoría no encontrada'}), 404
 
-    try:
-        # Eliminar la categoría de la base de datos
-        db.session.delete(categoria)
-        db.session.commit()
-        return jsonify({'message': 'Categoría eliminada correctamente'}), 200
-    except Exception as e:
-        # En caso de error al eliminar, realiza un rollback y devuelve un mensaje de error
-        db.session.rollback()
-        return jsonify({'message': 'Error al eliminar la categoría', 'error': str(e)}), 500
+    # Eliminar físicamente las fotos asociadas a la categoría
+    foto_path = os.path.join(api.config['UPLOAD_FOLDER'], categoria.nombreesp, categoria.foto)
+
+    # Elimina las fotos si existen
+    if os.path.exists(foto_path):
+        os.remove(foto_path)
+
+    # Eliminar la categoría en la base de datos
+    db.session.delete(categoria)
+    db.session.commit()
+
+    return jsonify({'message': 'Categoría eliminada correctamente'}), 200
+
+
+# Ruta para servir archivos estáticos de productos
+@api.route('/uploads/<categoria>/<nombreproducto>/<filename>')
+def uploaded_product_file(categoria, nombreproducto, filename):
+    return send_from_directory(os.path.join(api.config['UPLOAD_FOLDER'], categoria, nombreproducto), filename)
 
 # Ruta para crear un nuevo producto
 @api.route('/upload_product', methods=['POST'])
@@ -277,15 +292,24 @@ def upload_product():
         descripcioneng = request.form['descripcioneng']
         categoria_id = request.form['categoria']
 
+        # Obtener el nombre de la categoría
+        categoria = Categorias.query.get(categoria_id)
+        if not categoria:
+            return jsonify({'error': 'Category not found'}), 404
+
+        # Crear una carpeta para el producto dentro de la categoría
+        producto_folder = os.path.join(api.config['UPLOAD_FOLDER'], categoria.nombreesp, secure_filename(nombreesp))
+        os.makedirs(producto_folder, exist_ok=True)
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filename2 = None
 
             if file2 and allowed_file(file2.filename):
                 filename2 = secure_filename(file2.filename)
-                file2.save(os.path.join(api.config['UPLOAD_FOLDER'], filename2))
+                file2.save(os.path.join(producto_folder, filename2))
 
-            file.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
+            file.save(os.path.join(producto_folder, filename))
 
             nuevo_producto = Productos(
                 nombreesp=nombreesp,
@@ -346,8 +370,8 @@ def get_products():
                     'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
                     'pallet_100x120': packaging.pallet_100x120,
                     'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
-                    'foto': packaging.foto,
-                    'foto2': packaging.foto2,
+                    'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                    'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
                     'producto_id': packaging.producto_id,
                     'users': users,  # Agrega la lista de usuarios al diccionario de packaging_data
                 }
@@ -361,8 +385,9 @@ def get_products():
                 'descripcionesp': product.descripcionesp,
                 'descripcioneng': product.descripcioneng,
                 'categoria_id': product.categoria_id,
-                'foto': product.foto,
-                'foto2': product.foto2,
+                'categoria_nombreesp': product.categoria_nombreesp_rel.nombreesp if product.categoria_nombreesp_rel else None,
+                'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto}",
+                'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto2}" if product.foto2 else None,
                 'packagings': packaging_list,
                 'meses_de_produccion': meses_de_produccion,
             }
@@ -374,18 +399,29 @@ def get_products():
         return jsonify({'error': str(e)}), 500
 
 
+import os
 
-
-# Ruta para borrar productos
 @api.route('/productos/<int:producto_id>', methods=['DELETE'])
 def borrar_producto(producto_id):
     producto = Productos.query.get(producto_id)
-    if producto:
-        db.session.delete(producto)
-        db.session.commit()
-        return jsonify({'mensaje': 'Producto borrado correctamente'}), 200
-    else:
+
+    if producto is None:
         return jsonify({'mensaje': 'Producto no encontrado'}), 404
+
+    # Eliminar físicamente las fotos asociadas al producto
+    foto_path = os.path.join(api.config['UPLOAD_FOLDER'], producto.categoria_nombreesp_rel.nombreesp, producto.nombreesp, producto.foto)
+    foto2_path = os.path.join(api.config['UPLOAD_FOLDER'], producto.categoria_nombreesp_rel.nombreesp, producto.nombreesp, producto.foto2) if producto.foto2 else None
+
+    # Elimina las fotos si existen
+    if os.path.exists(foto_path):
+        os.remove(foto_path)
+    if foto2_path and os.path.exists(foto2_path):
+        os.remove(foto2_path)
+
+    db.session.delete(producto)
+    db.session.commit()
+
+    return jsonify({'mensaje': 'Producto borrado correctamente'}), 200
 
 
 
@@ -426,6 +462,12 @@ def agregar_meses_de_produccion(producto_id):
         db.session.rollback()
         return jsonify({'error': 'Error interno del servidor'}), 500
 
+# Ruta para servir archivos estáticos de productos
+@api.route('/uploads/<categoria>/<nombreproducto>/<nombrepackaging>/<tamanocaja>/<calibre>/<filename>')
+def uploaded_packaging_file(categoria, nombreproducto, nombrepackaging, tamanocaja, calibre, filename):
+    return send_from_directory(os.path.join(api.config['UPLOAD_FOLDER'], categoria, nombreproducto, nombrepackaging, tamanocaja, calibre), filename)
+
+
 # Ruta para crear un nuevo packaging
 @api.route('/upload_packaging', methods=['POST'])
 def upload_packaging():
@@ -454,15 +496,31 @@ def upload_packaging():
         producto_id = request.form['producto_id']
         user_ids = request.form.getlist('user_ids')
 
+        # Obtener el nombre de la categoría
+        producto = Productos.query.get(producto_id)
+        if not producto:
+            return jsonify({'error': 'Product not found'}), 404
+
+        # Crear una carpeta para el packaging dentro del producto
+        packaging_folder = os.path.join(
+            api.config['UPLOAD_FOLDER'],
+            producto.categoria.nombreesp,
+            secure_filename(producto.nombreesp),
+            secure_filename(nombreesp),
+            secure_filename(tamano_caja),
+            secure_filename(calibre)
+        )
+        os.makedirs(packaging_folder, exist_ok=True)
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filename2 = None
 
             if file2 and allowed_file(file2.filename):
                 filename2 = secure_filename(file2.filename)
-                file2.save(os.path.join(api.config['UPLOAD_FOLDER'], filename2))
+                file2.save(os.path.join(packaging_folder, filename2))
 
-            file.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
+            file.save(os.path.join(packaging_folder, filename))
 
             nuevo_packaging = Packagings(
                 nombreesp=nombreesp,
@@ -501,7 +559,6 @@ def upload_packaging():
         print(f"Error en la carga del embalaje: {str(e)}")
         return jsonify({'error': 'Error interno del servidor'}), 500
 
-
 # Ruta para obtener todos los packagings
 @api.route('/packagings', methods=['GET'])
 def get_packagings():
@@ -514,6 +571,10 @@ def get_packagings():
 
             # Accede al nombre en español del producto a través de la relación
             packaging.producto.nombre = packaging.producto.nombreesp if packaging.producto else None
+
+            # Forma las URL completas para las fotos
+            foto_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}"
+            foto2_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None
 
             packaging_data = {
                 'id': packaging.id,
@@ -529,8 +590,8 @@ def get_packagings():
                 'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
                 'pallet_100x120': packaging.pallet_100x120,
                 'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
-                'foto': packaging.foto,
-                'foto2': packaging.foto2,
+                'foto': foto_url,
+                'foto2': foto2_url,
                 'producto_id': packaging.producto_id,
                 'nombreproducto': packaging.producto.nombre,  # Nuevo campo para el nombre del producto en español
                 'users': users,
@@ -588,10 +649,6 @@ def edit_packaging_users(packaging_id):
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 
-
-
-
-
 # Ruta para buscar productos por nombre dentro de una categoría
 @api.route('/categorias/<int:categoria_id>/productos', methods=['GET'])
 def search_products_in_category(categoria_id):
@@ -615,12 +672,15 @@ def search_products_in_category(categoria_id):
         productos_info = []
 
         for producto in productos:
+            # Formar la URL de la foto del producto
+            foto_url = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto}"
+
             # Agregar información relevante del producto a la lista
             producto_info = {
                 'id': producto.id,
                 'nombreesp': producto.nombreesp,
                 'nombreeng': producto.nombreeng,
-                'foto': producto.foto,
+                'foto': foto_url,  # URL completa de la foto
                 # Puedes agregar más campos según tus necesidades
             }
             productos_info.append(producto_info)
@@ -630,6 +690,7 @@ def search_products_in_category(categoria_id):
     except Exception as e:
         # Manejo de errores
         return jsonify({'error': str(e)}), 500
+
 
 # Ruta para obtener la información completa de un producto por su ID y categoría por su ID
 @api.route('/categorias/<int:categoria_id>/productos/<int:producto_id>', methods=['GET'])
@@ -650,9 +711,35 @@ def get_product_info_by_category(categoria_id, producto_id):
             product_info = {
                 "categoria": categoria.serialize(),
                 "producto": producto.serialize(),
-                "packagings": [packaging.serialize() for packaging in packagings],
+                "packagings": [],
                 "meses_produccion": [mes.serialize() for mes in meses_produccion]
             }
+
+            # Agregar la URL de las fotos de los productos al diccionario
+            product_info["producto"]["foto_url"] = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto}"
+            product_info["producto"]["foto2_url"] = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto2}" if producto.foto2 else None
+
+            # Agregar la URL de las fotos de los packagings al diccionario
+            for packaging in packagings:
+                packaging_data = {
+                    'id': packaging.id,
+                    'nombreesp': packaging.nombreesp,
+                    'nombreeng': packaging.nombreeng,
+                    'marca': packaging.marca,
+                    'presentacion': packaging.presentacion,
+                    'calibre': packaging.calibre,
+                    'peso_presentacion_g': packaging.peso_presentacion_g,
+                    'peso_neto_kg': packaging.peso_neto_kg,
+                    'tamano_caja': packaging.tamano_caja,
+                    'pallet_80x120': packaging.pallet_80x120,
+                    'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
+                    'pallet_100x120': packaging.pallet_100x120,
+                    'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
+                    'users': [user.serialize() for user in packaging.users],
+                    'foto_url': f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                    'foto2_url': f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None
+                }
+                product_info["packagings"].append(packaging_data)
 
             return jsonify(product_info)
         else:
@@ -660,9 +747,9 @@ def get_product_info_by_category(categoria_id, producto_id):
     else:
         return jsonify({"error": "Categoría no encontrada"}), 404
 
-
-
 # Nueva ruta para eliminar packagings
+import os
+
 @api.route('/packagings/<int:packaging_id>', methods=['DELETE'])
 def delete_packaging(packaging_id):
     try:
@@ -671,6 +758,16 @@ def delete_packaging(packaging_id):
 
         if packaging is None:
             return jsonify({'error': 'Packaging no encontrado'}), 404
+
+        # Elimina físicamente las fotos asociadas al packaging
+        foto_path = os.path.join(api.config['UPLOAD_FOLDER'], packaging.categoria_nombreesp, packaging.producto_nombreesp, packaging.nombreesp.replace(' ', '_'), packaging.tamano_caja.replace('*', ''), packaging.calibre, packaging.foto)
+        foto2_path = os.path.join(api.config['UPLOAD_FOLDER'], packaging.categoria_nombreesp, packaging.producto_nombreesp, packaging.nombreesp.replace(' ', '_'), packaging.tamano_caja.replace('*', ''), packaging.calibre, packaging.foto2) if packaging.foto2 else None
+
+        # Elimina las fotos si existen
+        if os.path.exists(foto_path):
+            os.remove(foto_path)
+        if foto2_path and os.path.exists(foto2_path):
+            os.remove(foto2_path)
 
         # Elimina el packaging de la base de datos
         db.session.delete(packaging)

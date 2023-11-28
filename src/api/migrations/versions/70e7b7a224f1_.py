@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 8b83feca3fd2
+Revision ID: 70e7b7a224f1
 Revises: 
-Create Date: 2023-11-21 09:25:28.245468
+Create Date: 2023-11-28 09:48:12.985913
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8b83feca3fd2'
+revision = '70e7b7a224f1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -43,6 +43,7 @@ def upgrade():
     sa.Column('descripcioneng', sa.Text(), nullable=False),
     sa.Column('categoria_id', sa.Integer(), nullable=False),
     sa.Column('foto', sa.String(length=120), nullable=False),
+    sa.Column('foto2', sa.String(length=120), nullable=True),
     sa.ForeignKeyConstraint(['categoria_id'], ['categorias.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -57,6 +58,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombreesp', sa.String(length=80), nullable=False),
     sa.Column('nombreeng', sa.String(length=80), nullable=False),
+    sa.Column('marca', sa.String(length=80), nullable=False),
     sa.Column('presentacion', sa.String(length=80), nullable=False),
     sa.Column('calibre', sa.String(length=80), nullable=False),
     sa.Column('peso_presentacion_g', sa.String(length=80), nullable=False),
@@ -67,6 +69,7 @@ def upgrade():
     sa.Column('pallet_100x120', sa.String(length=80), nullable=False),
     sa.Column('peso_neto_pallet_100x120_kg', sa.String(length=80), nullable=False),
     sa.Column('foto', sa.String(length=120), nullable=False),
+    sa.Column('foto2', sa.String(length=120), nullable=True),
     sa.Column('producto_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['producto_id'], ['productos.id'], name='fk_packagings_producto_id', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')

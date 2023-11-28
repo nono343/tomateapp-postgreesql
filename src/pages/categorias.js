@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 
-// ... Importar tus librerías y componentes necesarios
 
 const ProductosPorCategoria = (props) => {
   const { id } = useParams();
@@ -10,6 +9,7 @@ const ProductosPorCategoria = (props) => {
   const [categoriaNombreEsp, setCategoriaNombreEsp] = useState('');
   const [categoriaNombreEng, setCategoriaNombreEng] = useState('');
 
+  console.log(productos)
   useEffect(() => {
     const fetchProductosPorCategoria = async () => {
       try {
@@ -45,8 +45,8 @@ const ProductosPorCategoria = (props) => {
               className="group space-y-1 border border-gray-100 dark:border-gray-700 rounded-3xl bg-white dark:bg-gray-800 px-8 py-12 text-center shadow-2xl shadow-gray-600/10 dark:shadow-none transition-transform transform hover:scale-105 duration-500 ease-in-out hover:shadow-2xl hover:border-red-400"
             >
               <img
-                className="mx-auto w-120"
-                src={`http://localhost:5000/uploads/${producto.foto}`}
+                className="mx-auto "  // Corregir la clase para establecer el ancho máximo
+                src={producto.foto}
                 alt={producto.nombreesp}
                 loading="lazy"
               />
