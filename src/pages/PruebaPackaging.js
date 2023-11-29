@@ -23,6 +23,9 @@ function PruebaPackaging(props) {
     const [productIds, setProductIds] = useState(""); // Suponiendo que productIds es una cadena
     const [availableProducts, setAvailableProducts] = useState([]);
 
+
+
+
     const nombresMappings = {
         'BOLSA SNACK EN FLOWPACK': 'FLOWPACK SNACK BAG',
         'TARRINA DE CARTÓN CON TAPA': 'CARDBOARD WITH LID',

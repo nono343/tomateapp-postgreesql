@@ -12,9 +12,9 @@ const ProductSearch = ({ isSpanish, setIsSearching }) => {
 
     try {
       const response = await axios.get(`http://localhost:5000/productos?nombre=${term}`);
-      const data = response.data; 
+      const data = response.data;
       setSearchResults(data.products);
-      setIsSearching(!!term.trim()); 
+      setIsSearching(!!term.trim());
     } catch (error) {
       console.error('Error al realizar la búsqueda:', error);
     }

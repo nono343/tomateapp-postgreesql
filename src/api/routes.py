@@ -14,6 +14,7 @@ from app import api, bcrypt, db, jwt, flash, redirect
 from models import User,Categorias, Productos,MesesProduccion , Packagings   
 from util import allowed_file  # Importa la función allowed_file desde util.py
 from flask import send_from_directory
+from unidecode import unidecode
 
 
 
@@ -201,6 +202,43 @@ def upload_category():
     else:
         return jsonify({'error': 'Invalid file type'}), 400
 
+@api.route('/edit_category/<int:categoria_id>', methods=['PUT'])
+def edit_category(categoria_id):
+    # Obtener la categoría existente por su ID
+    categoria = Categorias.query.get(categoria_id)
+    
+    if not categoria:
+        return jsonify({'error': 'Category not found'}), 404
+
+    # Obtener los nuevos datos del formulario
+    nombreesp = request.form.get('nombreesp')
+    nombreeng = request.form.get('nombreeng')
+    nueva_foto = request.files.get('file')
+
+    # Guardar el nombre de la foto anterior para borrarla después
+    foto_anterior = categoria.foto
+
+    # Actualizar los campos si se proporcionan nuevos valores
+    if nombreesp:
+        categoria.nombreesp = nombreesp
+    if nombreeng:
+        categoria.nombreeng = nombreeng
+    if nueva_foto and allowed_file(nueva_foto.filename):
+        filename = secure_filename(nueva_foto.filename)
+        categoria.foto = filename
+        nueva_foto.save(os.path.join(api.config['UPLOAD_FOLDER'], nombreesp, filename))
+
+        # Borrar la foto anterior si existe
+        if foto_anterior:
+            foto_anterior_path = os.path.join(api.config['UPLOAD_FOLDER'], nombreesp, foto_anterior)
+            if os.path.exists(foto_anterior_path):
+                os.remove(foto_anterior_path)
+
+    # Guardar los cambios en la base de datos
+    db.session.commit()
+
+    return jsonify({'message': 'Category updated successfully'}), 200
+
 
 @api.route('/categorias', methods=['GET'])
 def get_categories():
@@ -244,7 +282,6 @@ def get_category_by_id(categoria_id):
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 
-import os
 
 @api.route('/categorias/<int:id>', methods=['DELETE'])
 def delete_categoria(id):
@@ -331,6 +368,81 @@ def upload_product():
         print(f"Error: {str(e)}")
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
+
+@api.route('/edit_product/<int:producto_id>', methods=['PUT'])
+def edit_product(producto_id):
+    try:
+        # Obtener el producto existente por su ID
+        producto = Productos.query.get(producto_id)
+        if not producto:
+            return jsonify({'error': 'Product not found'}), 404
+
+        if 'file' not in request.files:
+            return jsonify({'error': 'At least one file is required'}), 400
+
+        file = request.files['file']
+        file2 = request.files.get('file2')  # Use get to allow file2 to be None
+
+        if file.filename == '':
+            return jsonify({'error': 'No selected file for the first photo'}), 400
+
+        nombreesp = request.form['nombreesp']
+        nombreeng = request.form['nombreeng']
+        descripcionesp = request.form['descripcionesp']
+        descripcioneng = request.form['descripcioneng']
+        categoria_id = request.form['categoria']
+
+        # Obtener el nombre de la categoría
+        categoria = Categorias.query.get(categoria_id)
+        if not categoria:
+            return jsonify({'error': 'Category not found'}), 404
+
+        # Guardar el nombre de las fotos anteriores para borrarlas después
+        foto_anterior = producto.foto
+        foto_anterior2 = producto.foto2
+
+        # Actualizar los datos del producto
+        producto.nombreesp = nombreesp
+        producto.nombreeng = nombreeng
+        producto.descripcionesp = descripcionesp
+        producto.descripcioneng = descripcioneng
+        producto.categoria_id = categoria_id
+
+        # Actualizar las imágenes solo si se proporcionan nuevas imágenes
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filename2 = None
+
+            if file2 and allowed_file(file2.filename):
+                filename2 = secure_filename(file2.filename)
+                file2.save(os.path.join(api.config['UPLOAD_FOLDER'], categoria.nombreesp, secure_filename(nombreesp), filename2))
+                producto.foto2 = filename2
+
+                # Borrar la foto anterior si existe
+                if foto_anterior2:
+                    old_image_path2 = os.path.join(api.config['UPLOAD_FOLDER'], categoria.nombreesp, secure_filename(nombreesp), foto_anterior2)
+                    if os.path.exists(old_image_path2):
+                        os.remove(old_image_path2)
+
+            file.save(os.path.join(api.config['UPLOAD_FOLDER'], categoria.nombreesp, secure_filename(nombreesp), filename))
+            producto.foto = filename
+
+            # Borrar la foto anterior si existe
+            if foto_anterior:
+                old_image_path = os.path.join(api.config['UPLOAD_FOLDER'], categoria.nombreesp, secure_filename(nombreesp), foto_anterior)
+                if os.path.exists(old_image_path):
+                    os.remove(old_image_path)
+
+        db.session.commit()
+
+        return jsonify({'message': 'Product updated successfully'}), 200
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+
+
+
 # Ruta para ver todos los productos
 @api.route('/productos', methods=['GET'])
 def get_products():
@@ -370,8 +482,8 @@ def get_products():
                     'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
                     'pallet_100x120': packaging.pallet_100x120,
                     'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
-                    'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
-                    'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
+                    'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                    'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
                     'producto_id': packaging.producto_id,
                     'users': users,  # Agrega la lista de usuarios al diccionario de packaging_data
                 }
@@ -399,7 +511,6 @@ def get_products():
         return jsonify({'error': str(e)}), 500
 
 
-import os
 
 @api.route('/productos/<int:producto_id>', methods=['DELETE'])
 def borrar_producto(producto_id):
@@ -573,8 +684,8 @@ def get_packagings():
             packaging.producto.nombre = packaging.producto.nombreesp if packaging.producto else None
 
             # Forma las URL completas para las fotos
-            foto_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}"
-            foto2_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None
+            foto_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}"
+            foto2_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None
 
             packaging_data = {
                 'id': packaging.id,

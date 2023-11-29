@@ -46,7 +46,7 @@ export const Navbar = (props) => {
 
     return (
 
-        <div className="drawer z-50 max-w-screen-xl mx-auto">
+        <div className=" drawer z-50 max-w-screen-xl mx-auto">
             <input id="my-drawer-3" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content flex flex-col">
                 {/* Navbar */}
@@ -94,17 +94,19 @@ export const Navbar = (props) => {
                     </div>
                     <div>
                         <details className="dropdown dropdown-end" >
-                            <summary className="btn btn-ghost rounded-btn w-20">
-                                <img src={foto} alt="User" />
+                            <summary className="btn btn-ghost btn-circle avatar">
+                                <div className="w-10 rounded-full">
+                                    <img src={foto} />
+                                </div>
                             </summary>
                             <ul className="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52">
                                 {admin && (
-                                    <li onClick={() => navigate("/admin")} className="btn btn-accent">
-                                            Admin
+                                    <li onClick={() => navigate("/admin")}>
+                                       <a>Panel de Control</a> 
                                     </li>
                                 )}
-                                <li onClick={handleLogout} className="btn btn-error">
-                                        Logout
+                                <li onClick={handleLogout}>
+                                  <a>Logout</a>  
                                 </li>
                             </ul>
                         </details>
