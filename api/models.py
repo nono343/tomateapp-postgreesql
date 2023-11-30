@@ -10,38 +10,37 @@ def get_uuid():
 # Tabla de asociación para la relación many-to-many entre User y Packagings
 user_packagings = db.Table(
     'user_packagings',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('user_id', db.String(150), db.ForeignKey('users.id'), primary_key=True),
     db.Column('packaging_id', db.Integer, db.ForeignKey('packagings.id'), primary_key=True)
 )
 
 class User(db.Model):
     __tablename__ = "users"
-    id = db.Column(db.String(11), primary_key=True, unique=True, default=get_uuid)
+    id = db.Column(db.String(150), primary_key=True, unique=True, default=get_uuid)
     username = db.Column(db.String(150), unique=True)
     password = db.Column(db.Text, nullable=False)
     isAdmin = db.Column(db.String(10), nullable=False)
-    foto = db.Column(db.String(120), nullable=True)  # Agrega la columna para la foto
+    # foto = db.Column(db.String(120), nullable=True)
 
-    
     # Relación many-to-many con Packagings
-    packagings = db.relationship('Packagings', secondary=user_packagings, backref=db.backref('users', lazy='dynamic'))
+    packagings = db.relationship('Packagings', secondary=user_packagings, back_populates='users')
+
 
     def serialize(self):
         return {
             'id': self.id,
             'username': self.username,
             'isAdmin': self.isAdmin,
-            'foto': self.foto,
+            # 'foto': self.foto,
         }
 
 class Categorias(db.Model):
-    __tablename__ = 'categorias'  # Nombre de la tabla en la base de datos
+    __tablename__ = 'categorias'
     id = db.Column(db.Integer, primary_key=True)
     nombreesp = db.Column(db.String(80), nullable=False)
     nombreeng = db.Column(db.String(80), nullable=False)
     foto = db.Column(db.String(120), nullable=False)
     productos = db.relationship('Productos', backref='categoria', cascade='all, delete-orphan')
-
 
     def __init__(self, nombreesp, nombreeng, foto):
         self.nombreesp = nombreesp
@@ -54,14 +53,11 @@ class Categorias(db.Model):
             'nombreesp': self.nombreesp,
             'nombreeng': self.nombreeng,
             'foto': self.foto,
-            # Otros campos si es necesario
         }
 
     def __repr__(self):
         return f'<Categorias {self.nombreesp}>'
 
-
-# Modelo para los productos
 class Productos(db.Model):
     __tablename__ = 'productos'
     id = db.Column(db.Integer, primary_key=True)
@@ -72,9 +68,8 @@ class Productos(db.Model):
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
     foto = db.Column(db.String(120), nullable=False)
     foto2 = db.Column(db.String(120), nullable=True)
-    meses_produccion = db.Column(db.String(50))  # Cambia el tipo según tus necesidades
-    categoria_nombreesp_rel = db.relationship('Categorias', backref=db.backref('productos_rel', lazy=True))
-    packagings = db.relationship('Packagings', backref='producto', cascade='all, delete-orphan')
+    meses_produccion = db.Column(db.String(50))
+    packagings = db.relationship('Packagings', back_populates='producto', cascade='all, delete-orphan')
 
     def __init__(self, nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, foto, foto2, meses_produccion):
         self.nombreesp = nombreesp
@@ -99,12 +94,10 @@ class Productos(db.Model):
             'foto2': self.foto2,
             'meses_produccion': self.meses_produccion.split(',') if self.meses_produccion else [],
             'packagings': [packaging.serialize() for packaging in self.packagings],
-
         }
 
     def __repr__(self):
         return f'<Productos {self.nombreesp}>'
-
 
 class Packagings(db.Model):
     __tablename__ = 'packagings'
@@ -123,15 +116,17 @@ class Packagings(db.Model):
     peso_neto_pallet_100x120_kg = db.Column(db.String(80), nullable=False)
     pallet_avion = db.Column(db.String(80), nullable=False)
     peso_neto_pallet_avion = db.Column(db.String(80), nullable=False)
-
-    foto = db.Column(db.String(120), nullable=False)  
+    foto = db.Column(db.String(120), nullable=False)
     foto2 = db.Column(db.String(120), nullable=True)
-
     producto_id = db.Column(db.Integer, db.ForeignKey('productos.id', name='fk_packagings_producto_id', ondelete='CASCADE'), nullable=False)
+    categoria_id = db.Column(db.Integer, nullable=False)
+    categoria_nombreesp = db.Column(db.String(80), nullable=False)
+    producto_nombreesp = db.Column(db.String(80), nullable=False)
+    producto = db.relationship('Productos', back_populates='packagings')
 
-    categoria_id = db.Column(db.Integer, nullable=False)  # Nueva columna para el ID de la categoría
-    categoria_nombreesp = db.Column(db.String(80), nullable=False)  # Nueva columna para el nombre de la categoría
-    producto_nombreesp = db.Column(db.String(80), nullable=False)  # Nueva columna para el nombre del producto
+        # Relación many-to-many con User
+    users = db.relationship('User', secondary=user_packagings, back_populates='packagings')
+
 
     def __init__(self, nombreesp, nombreeng, marca, presentacion, calibre, peso_presentacion_g, peso_neto_kg,
                  tamano_caja, pallet_80x120, peso_neto_pallet_80x120_kg, pallet_100x120,
@@ -154,7 +149,6 @@ class Packagings(db.Model):
         self.foto2 = foto2
         self.producto_id = producto_id
 
-        # Automatiza la asignación de la categoría del producto al packaging
         producto = Productos.query.get(producto_id)
         if producto:
             self.categoria_id = producto.categoria_id
@@ -183,7 +177,6 @@ class Packagings(db.Model):
             'categoria_nombreesp': self.categoria_nombreesp,
             'producto_nombreesp': self.producto_nombreesp,
             'users': [user.serialize() for user in self.users],
-            # Otros campos si es necesario
         }
 
     def __repr__(self):

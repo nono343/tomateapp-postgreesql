@@ -8,7 +8,7 @@ function Register() {
         username: "",
         password: "",
         isAdmin: "",
-        file: null,
+        // file: null,
     });
 
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ function Register() {
         event.preventDefault();
 
         const formData = new FormData();
-        formData.append("file", registerForm.file);
+        // formData.append("file", registerForm.file);
         formData.append("username", registerForm.username);
         formData.append("password", registerForm.password);
         formData.append("isAdmin", registerForm.isAdmin);
@@ -51,7 +51,7 @@ function Register() {
             username: "",
             password: "",
             isAdmin: "",
-            file: null,
+            // file: null,
         });
     }
 
@@ -60,7 +60,7 @@ function Register() {
       
         setRegisterForm((prevForm) => ({
           ...prevForm,
-          [name]: type === "file" ? event.target.files[0] : (name === 'isAdmin' ? value : (name === 'username' ? value.toUpperCase() : value.trim())),
+          [name]: (name === 'isAdmin' ? value : (name === 'username' ? value.toUpperCase() : value.trim())),
         }));
       }
       
@@ -130,7 +130,7 @@ function Register() {
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <div>
+                    {/* <div>
                         <label htmlFor="file" className="block text-sm font-medium leading-6 text-gray-900">
                             Avatar Usuario
                         </label>
@@ -143,7 +143,7 @@ function Register() {
                                 accept="image/*"
                                 className="file-input file-input-bordered file-input-success w-full"                             />
                         </div>
-                    </div>
+                    </div> */}
 
                     <div>
                         <button
@@ -160,81 +160,5 @@ function Register() {
     )
 }
 
-
-// <div>
-//     <div className="container h-50">
-//         <div className="container-fluid h-custom">
-//             <div className="row d-flex justify-content-center align-items-center h-50">
-//                 <div className="col-md-9 col-lg-6 col-xl-5">
-//                     <img src={imgs[0]} className="img-fluid" alt="register-img" />
-//                 </div>
-//                 <div className="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
-//                     <form>
-//                         <div className="d-flex flex-row align-items-center justify-content-center justify-content-lg-start">
-//                             <p className="lead fw-normal mb-0 me-3">Create an Account</p>
-//                         </div>
-
-//                         <div className="form-outline mb-4">
-//                             <input
-//                                 type="text"
-//                                 value={registerForm.username}
-//                                 onChange={handleChange}
-//                                 name="username"
-//                                 id="form3Example3"
-//                                 className="form-control form-control-lg"
-//                                 placeholder="Enter your username"
-//                             />
-//                             <label className="form-label" htmlFor="form3Example3">
-//                                 Username
-//                             </label>
-//                         </div>
-
-//                         <div className="form-outline mb-3">
-//                             <input
-//                                 type="password"
-//                                 value={registerForm.password}
-//                                 onChange={handleChange}
-//                                 name="password"
-//                                 id="form3Example4"
-//                                 className="form-control form-control-lg"
-//                                 placeholder="Enter password"
-//                             />
-//                             <label className="form-label" htmlFor="form3Example4">
-//                                 Password
-//                             </label>
-//                         </div>
-
-//                         <div className="form-outline mb-4">
-//                             <label className="form-label" htmlFor="roleSelect">Role:</label>
-//                             <select
-//                                 id="roleSelect"
-//                                 name="isAdmin"
-//                                 value={registerForm.isAdmin}
-//                                 onChange={handleChange}
-//                                 className="form-control form-control-lg"
-//                             >
-//                                 <option value="user">User</option>
-//                                 <option value="admin">Admin</option>
-//                             </select>
-//                         </div>
-
-//                         <div className="text-center text-lg-start mt-4 pt-2">
-//                             <button
-//                                 type="button"
-//                                 className="btn btn-primary btn-lg"
-//                                 onClick={handleRegister}
-//                             >
-//                                 Register
-//                             </button>
-//                             <p className="small fw-bold mt-2 pt-1 mb-0">
-//                                 Already have an account? <a href="/login" className="link-danger">Login</a>
-//                             </p>
-//                         </div>
-//                     </form>
-//                 </div>
-//             </div>
-//         </div>
-//     </div>
-// </div>
 
 export default Register;

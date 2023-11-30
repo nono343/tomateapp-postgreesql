@@ -16,6 +16,8 @@ from util import allowed_file  # Importa la función allowed_file desde util.py
 from flask import send_from_directory
 from unidecode import unidecode
 from sqlalchemy.orm import load_only
+from sqlalchemy.orm import joinedload
+
 
 
 
@@ -23,10 +25,10 @@ from sqlalchemy.orm import load_only
 def hello_world():
     return "<p>Hello, World!</p>"
 
-# Ruta para servir archivos estáticos (actualizada)
-@api.route('/uploads/<filename>')
-def uploaded_file_user(filename):
-    return send_from_directory(api.config['UPLOAD_FOLDER'], filename)
+# # Ruta para servir archivos estáticos (actualizada)
+# @api.route('/uploads/<filename>')
+# def uploaded_file_user(filename):
+#     return send_from_directory(api.config['UPLOAD_FOLDER'], filename)
 
 
 @api.route('/logintoken', methods=["POST"])
@@ -43,7 +45,7 @@ def create_token():
     print("Username:", user.username)
 
     # Modifica la creación del token para incluir la ruta completa de la foto
-    foto_path = f"http://localhost:5000/uploads/{user.foto}" if user.foto else None
+    # foto_path = f"http://localhost:5000/uploads/{user.foto}" if user.foto else None
 
 
     # Crea el token con información adicional en la carga útil
@@ -52,7 +54,7 @@ def create_token():
         additional_claims={
             "username": user.username,
             "isAdmin": user.isAdmin,
-            "foto": foto_path  # Cambia aquí para incluir la ruta completa
+            # "foto": foto_path  # Cambia aquí para incluir la ruta completa
         }
     )
 
@@ -65,24 +67,24 @@ def create_token():
         "username": user.username,
         "access_token": access_token,
         "isAdmin": user.isAdmin,
-        "foto": foto_path
+        # "foto": foto_path
     })
 
 @api.route("/signup", methods=["POST"])
 def signup():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+    # if 'file' not in request.files:
+    #     return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+    # file = request.files['file']
+    # if file.filename == '':
+    #     return jsonify({'error': 'No selected file'}), 400
 
     username = request.form.get("username", None)
     password = request.form.get("password", None)
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(os.path.abspath(api.config['UPLOAD_FOLDER']), filename))
+    # if file and allowed_file(file.filename):
+    #     filename = secure_filename(file.filename)
+    #     file.save(os.path.join(os.path.abspath(api.config['UPLOAD_FOLDER']), filename))
 
     if not username or not password:
         return jsonify({"error": "Username and password are required"}), 400
@@ -92,7 +94,7 @@ def signup():
         return jsonify({"error": "Username already exists"}), 409
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-    new_user = User(username=username, password=hashed_password, isAdmin=request.form.get("isAdmin", "user"), foto=filename)
+    new_user = User(username=username, password=hashed_password, isAdmin=request.form.get("isAdmin", "user"))
     db.session.add(new_user)
     db.session.commit()
 
@@ -100,7 +102,7 @@ def signup():
         "id": new_user.id,
         "username": new_user.username,
         "isAdmin": new_user.isAdmin,
-        "foto": new_user.foto
+        # "foto": new_user.foto
     })
  
  # Ruta para obtener la información de los usuarios
@@ -454,6 +456,7 @@ def edit_product(producto_id):
 
 
 
+
 @api.route('/productos', methods=['GET'])
 def get_products():
     try:
@@ -461,7 +464,10 @@ def get_products():
         search_term = request.args.get('nombre', '')
 
         # Realiza la consulta filtrando por el nombre del producto
-        products = Productos.query.filter(Productos.nombreesp.ilike(f'%{search_term}%')).all()
+        products = Productos.query \
+            .options(joinedload(Productos.categoria)) \
+            .filter(Productos.nombreesp.ilike(f'%{search_term}%')) \
+            .all()
 
         # Lista para almacenar los datos de los productos
         product_list = []
@@ -492,12 +498,15 @@ def get_products():
                     'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
                     'pallet_avion': packaging.pallet_avion,
                     'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
-                    'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
-                    'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
+                    'foto': packaging.foto,  # Agrega la URL de la foto directamente
+                    'foto2': packaging.foto2,  # Agrega la URL de la segunda foto directamente
                     'producto_id': packaging.producto_id,
-                    'users': users,  # Agrega la lista de usuarios al diccionario de packaging_data
+                    'users': users,
                 }
                 packaging_list.append(packaging_data)
+
+            # Accede al nombre de la categoría
+            categoria_nombreesp = product.categoria.nombreesp if product.categoria else None
 
             # Crea un diccionario de datos del producto y sus packagings y meses de producción asociados
             product_data = {
@@ -507,9 +516,9 @@ def get_products():
                 'descripcionesp': product.descripcionesp,
                 'descripcioneng': product.descripcioneng,
                 'categoria_id': product.categoria_id,
-                'categoria_nombreesp': product.categoria_nombreesp_rel.nombreesp if product.categoria_nombreesp_rel else None,
-                'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto}",
-                'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto2}" if product.foto2 else None,
+                'categoria_nombreesp': categoria_nombreesp,
+                'foto': product.foto,  # Agrega la URL de la foto directamente
+                'foto2': product.foto2,  # Agrega la URL de la segunda foto directamente
                 'packagings': packaging_list,
                 'meses_produccion': meses_produccion,
             }
@@ -757,24 +766,29 @@ def search_products_in_category(categoria_id):
             return jsonify({'error': 'Categoría no encontrada'}), 404
 
         # Obtener los productos de la categoría filtrando por nombre
-        productos = Productos.query.filter(
-            Productos.categoria_id == categoria.id,
-            Productos.nombreesp.ilike(f'%{search_term}%')
-        ).all()
+        productos = Productos.query \
+            .options(joinedload(Productos.categoria)) \
+            .filter(
+                Productos.categoria_id == categoria.id,
+                Productos.nombreesp.ilike(f'%{search_term}%')
+            ).all()
 
         # Crear una lista para almacenar la información de cada producto
         productos_info = []
 
         for producto in productos:
-            # Formar la URL de la foto del producto
-            foto_url = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto}"
+            # Accede al nombre de la categoría
+            categoria_nombreesp = producto.categoria.nombreesp if producto.categoria else None
 
+            # Formar la URL de la foto del producto
+            foto_url = f"http://localhost:5000/uploads/{categoria_nombreesp}/{producto.nombreesp}/{producto.foto}"
 
             # Agregar información relevante del producto a la lista
             producto_info = {
                 'id': producto.id,
                 'nombreesp': producto.nombreesp,
                 'nombreeng': producto.nombreeng,
+                'categoria_nombreesp': categoria_nombreesp,
                 'foto': foto_url,  # URL completa de la foto
                 # Puedes agregar más campos según tus necesidades
             }
@@ -787,6 +801,7 @@ def search_products_in_category(categoria_id):
         return jsonify({'error': str(e)}), 500
 
 
+# Ruta para obtener información detallada de un producto dentro de una categoría
 @api.route('/categorias/<int:categoria_id>/productos/<int:producto_id>', methods=['GET'])
 def get_product_info_by_category(categoria_id, producto_id):
     try:
@@ -795,6 +810,9 @@ def get_product_info_by_category(categoria_id, producto_id):
 
         if not producto:
             return jsonify({'error': 'Producto no encontrado'}), 404
+
+        # Accede al nombre de la categoría
+        categoria_nombreesp = producto.categoria.nombreesp if producto.categoria else None
 
         # Consulta los packagings asociados al producto
         packagings = producto.packagings
@@ -820,8 +838,8 @@ def get_product_info_by_category(categoria_id, producto_id):
                 'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
                 'pallet_avion': packaging.pallet_avion,
                 'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
-                'foto_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
-                'foto2_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
+                'foto_url': f"http://localhost:5000/uploads/{categoria_nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                'foto2_url': f"http://localhost:5000/uploads/{categoria_nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*','')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
                 'producto_id': packaging.producto_id,
                 'users': users,
             }
@@ -835,10 +853,9 @@ def get_product_info_by_category(categoria_id, producto_id):
             'descripcionesp': producto.descripcionesp,
             'descripcioneng': producto.descripcioneng,
             'categoria_id': producto.categoria_id,
-            'categoria_nombreesp': producto.categoria_nombreesp_rel.nombreesp if producto.categoria_nombreesp_rel else None,
-            'foto_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto}",
-            'foto2_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto2}" if producto.foto2 else None,
-
+            'categoria_nombreesp': categoria_nombreesp,
+            'foto_url': f"http://localhost:5000/uploads/{categoria_nombreesp}/{producto.nombreesp}/{producto.foto}",
+            'foto2_url': f"http://localhost:5000/uploads/{categoria_nombreesp}/{producto.nombreesp}/{producto.foto2}" if producto.foto2 else None,
             'packagings': packaging_list,
             'meses_produccion': producto.meses_produccion.split(',') if producto.meses_produccion else [],
         }
@@ -880,3 +897,34 @@ def delete_packaging(packaging_id):
     except Exception as e:
         # Manejo de errores
         return jsonify({'error': str(e)}), 500
+
+# Ruta para buscar productos por nombre y obtener información detallada
+@api.route('/productos/buscar', methods=['GET'])
+def search_products():
+    try:
+        nombre = request.args.get('nombre')
+
+        # Buscar productos que coincidan con el nombre
+        productos = Productos.query.filter(Productos.nombreesp.ilike(f"%{nombre}%") | Productos.nombreeng.ilike(f"%{nombre}%")).all()
+
+        # Construir una lista con la información de cada producto y su categoría
+        results = []
+        for producto in productos:
+            categoria_nombreesp = producto.categoria.nombreesp if producto.categoria else None
+            foto_url = f"http://localhost:5000/uploads/{categoria_nombreesp}/{producto.nombreesp}/{producto.foto}" if producto.foto else None
+
+            product_data = {
+                'id': producto.id,
+                'nombreesp': producto.nombreesp,
+                'nombreeng': producto.nombreeng,
+                'categoria_id': producto.categoria_id,
+                'categoria_nombreesp': categoria_nombreesp,
+                'foto_url': foto_url,
+            }
+            results.append(product_data)
+
+        return jsonify({'products': results}), 200
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500

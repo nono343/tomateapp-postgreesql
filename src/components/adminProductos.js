@@ -308,22 +308,22 @@ function AdminProductos() {
                             products.map((product) => (
                                 <tr key={product.id}>
                                     <td>
-                                        {product.foto_url && (
+                                        {product.foto && (
                                             <div className="flex items-center gap-3">
                                                 <div className="avatar">
                                                     <div className="mask mask-squircle w-12 h-12">
-                                                        <img src={product.foto_url} alt={product.nombreesp} />
+                                                        <img src={`http://localhost:5000/uploads/${product.categoria_nombreesp}/${product.nombreesp}/${product.foto}`} alt={product.nombreesp} />
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
                                     </td>
                                     <td>
-                                        {product.foto2_url && (
+                                        {product.foto2 && (
                                             <div className="flex items-center gap-3">
                                                 <div className="avatar">
                                                     <div className="mask mask-squircle w-12 h-12">
-                                                        <img src={product.foto2_url} alt={product.nombreesp} />
+                                                        <img src={`http://localhost:5000/uploads/${product.categoria_nombreesp}/${product.nombreesp}/${product.foto2}`} alt={product.nombreesp} />
                                                     </div>
                                                 </div>
                                             </div>

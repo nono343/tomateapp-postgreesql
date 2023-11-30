@@ -42,7 +42,6 @@ export const Navbar = (props) => {
         navigate("/");
     };
 
-    console.log(foto)
 
 
     return (
