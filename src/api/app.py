@@ -34,4 +34,4 @@ migrate = Migrate(api, db)
 from routes import *
 
 if __name__ == '__main__':
-    api.run(debug=True)
+    api.run(debug=os.environ.get("FLASK_ENV") == "development", port=int(os.environ.get("PORT", 5000)))
