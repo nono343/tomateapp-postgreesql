@@ -12,10 +12,10 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}  # Incluye la extensión 'we
 
 
 api = Flask(__name__)
-CORS(api, origins=["https://mi-aplicacion-mu.vercel.app"])
+CORS(api)
 
-api.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your_default_secret_key")
-api.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URI", "sqlite:///flaskdb.db")
+api.config["SECRET_KEY"] = "your_secret_key"  # Cambia esto por una clave segura
+api.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///flaskdb.db"
 api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 api.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(weeks=5200)  # 100 years
@@ -34,4 +34,5 @@ migrate = Migrate(api, db)
 from routes import *
 
 if __name__ == '__main__':
-    api.run(debug=False, port=int(os.environ.get("PORT", 5000)))
+    api.run(debug=True)
+

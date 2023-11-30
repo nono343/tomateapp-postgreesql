@@ -38,7 +38,7 @@ const DetalleProducto = (props) => {
     useEffect(() => {
         const fetchProductoPorId = async () => {
             try {
-                const response = await axios.get(`https://mi-aplicacion-mu.vercel.app/categorias/${categoria_id}/productos/${producto_id}`);
+                const response = await axios.get(`http://localhost:5000/categorias/${categoria_id}/productos/${producto_id}`);
                 const data = response.data;
 
                 // Accede a los datos del producto, packagings y usuarios

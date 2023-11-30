@@ -26,7 +26,7 @@ function Register() {
         formData.append("password", registerForm.password);
         formData.append("isAdmin", registerForm.isAdmin);
 
-        axios.post("https://mi-aplicacion-mu.vercel.app/signup", formData, {
+        axios.post("http://localhost:5000/signup", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },

@@ -119,10 +119,10 @@ function AdminPackaging(props) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const usersResponse = await axios.get('https://mi-aplicacion-mu.vercel.app/users');
+                const usersResponse = await axios.get('http://localhost:5000/users');
                 setAvailableUsers(usersResponse.data.users || []);
 
-                const productsResponse = await axios.get('https://mi-aplicacion-mu.vercel.app/productos'); // Cambiado de 'products' a 'productos'
+                const productsResponse = await axios.get('http://localhost:5000/productos'); // Cambiado de 'products' a 'productos'
                 setAvailableProducts(productsResponse.data.products || []);
             } catch (error) {
                 console.error('Error al obtener la lista de usuarios o productos:', error.response.data.error);
@@ -170,7 +170,7 @@ function AdminPackaging(props) {
             userIds.forEach((userId) => {
                 formData.append('user_ids', userId);
             });
-            const response = await axios.post('https://mi-aplicacion-mu.vercel.app/upload_packaging', formData, {
+            const response = await axios.post('http://localhost:5000/upload_packaging', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -215,7 +215,7 @@ function AdminPackaging(props) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('https://mi-aplicacion-mu.vercel.app/productos');
+                const response = await axios.get('http://localhost:5000/productos');
                 const data = response.data.products;
                 setPackagingData(data);
             } catch (error) {
@@ -231,7 +231,7 @@ function AdminPackaging(props) {
     useEffect(() => {
         if (actualizacionProductos) {
             // Fetch the updated list of products right after successful upload
-            axios.get('https://mi-aplicacion-mu.vercel.app/productos')
+            axios.get('http://localhost:5000/productos')
                 .then((response) => {
                     setPackagingData(response.data.products);
                 })
@@ -247,7 +247,7 @@ function AdminPackaging(props) {
 
     const handleDeletePackaging = async (packagingId) => {
         try {
-            const response = await axios.delete(`https://mi-aplicacion-mu.vercel.app/packagings/${packagingId}`);
+            const response = await axios.delete(`http://localhost:5000/packagings/${packagingId}`);
             if (response.status === 200) {
                 // Recargar los datos después de una eliminación exitosa
                 fetchData();
@@ -296,7 +296,7 @@ function AdminPackaging(props) {
 
     const fetchData = async () => {
         try {
-            const response = await axios.get('https://mi-aplicacion-mu.vercel.app/packagings');
+            const response = await axios.get('http://localhost:5000/packagings');
             setPackagings(response.data.packagings);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -330,7 +330,7 @@ function AdminPackaging(props) {
 
     useEffect(() => {
         // Realizar la solicitud GET para obtener los packagings
-        axios.get('https://mi-aplicacion-mu.vercel.app/packagings')
+        axios.get('http://localhost:5000/packagings')
             .then(response => {
                 setPackagings(response.data.packagings);
             })
@@ -339,7 +339,7 @@ function AdminPackaging(props) {
             });
 
         // Realizar la solicitud GET para obtener todos los usuarios
-        axios.get('https://mi-aplicacion-mu.vercel.app/users')
+        axios.get('http://localhost:5000/users')
             .then(response => {
                 setAllUsers(response.data.users);
             })
@@ -361,13 +361,13 @@ function AdminPackaging(props) {
     const handleSaveUsers = async () => {
         try {
             // Realizar la solicitud PUT para actualizar los usuarios asociados al packaging
-            await axios.put(`https://mi-aplicacion-mu.vercel.app/packagings/${editingPackaging.id}/edit_users`, {
+            await axios.put(`http://localhost:5000/packagings/${editingPackaging.id}/edit_users`, {
                 users: editedUsers.map(user => user.id),
             });
 
 
             // Actualizar la lista de packagings después de la edición
-            axios.get('https://mi-aplicacion-mu.vercel.app/packagings')
+            axios.get('http://localhost:5000/packagings')
                 .then(response => {
                     setPackagings(response.data.packagings);
                 });

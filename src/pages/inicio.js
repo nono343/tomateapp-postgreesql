@@ -9,7 +9,7 @@ export default function Inicio(props) {
 
 
     useEffect(() => {
-        axios.get('https://mi-aplicacion-mu.vercel.app/categorias')
+        axios.get('http://localhost:5000/categorias')
             .then((response) => {
                 setCategories(response.data.categories);
             })

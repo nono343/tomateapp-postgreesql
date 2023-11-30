@@ -23,14 +23,14 @@ function AdminProductos() {
 
     const fetchCategories = () => {
         // Realiza una solicitud GET para obtener las categorías
-        axios.get("https://mi-aplicacion-mu.vercel.app/categorias")
+        axios.get("http://localhost:5000/categorias")
             .then((response) => setCategories(response.data.categories))
             .catch((error) => console.error('Error al obtener las categorías', error));
     };
 
     useEffect(() => {
         // Fetch products when the component mounts
-        axios.get('https://mi-aplicacion-mu.vercel.app/productos')
+        axios.get('http://localhost:5000/productos')
             .then(response => setProducts(response.data.products))
             .catch(error => console.error('Error al obtener la lista de productos:', error));
     }, []);
@@ -95,7 +95,7 @@ function AdminProductos() {
             });
 
             try {
-                const response = await axios.post('https://mi-aplicacion-mu.vercel.app/upload_product', formData, {
+                const response = await axios.post('http://localhost:5000/upload_product', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
@@ -105,7 +105,7 @@ function AdminProductos() {
                     setUploadedFileNameProduct(response.data.message);
 
                     // Fetch the updated list of products right after a successful upload
-                    const updatedProductsResponse = await axios.get('https://mi-aplicacion-mu.vercel.app/productos');
+                    const updatedProductsResponse = await axios.get('http://localhost:5000/productos');
                     setProducts(updatedProductsResponse.data.products || []);
 
                     console.log('Product uploaded successfully:', response.data.message);
@@ -121,10 +121,10 @@ function AdminProductos() {
     const handleDelete = async (productId) => {
         try {
             // Lógica para eliminar el producto con el ID proporcionado
-            const response = await axios.delete(`https://mi-aplicacion-mu.vercel.app/productos/${productId}`);
+            const response = await axios.delete(`http://localhost:5000/productos/${productId}`);
             if (response.status === 200) {
                 // Actualizar la lista de productos después de la eliminación
-                const updatedProductsResponse = await axios.get('https://mi-aplicacion-mu.vercel.app/productos');
+                const updatedProductsResponse = await axios.get('http://localhost:5000/productos');
                 setProducts(updatedProductsResponse.data.products || []);
             } else {
                 console.error('Error al eliminar el producto');
@@ -172,7 +172,7 @@ function AdminProductos() {
                 formData.append('categoria', categoryId);
 
                 const response = await axios.put(
-                    `https://mi-aplicacion-mu.vercel.app/edit_product/${editingProduct.id}`,
+                    `http://localhost:5000/edit_product/${editingProduct.id}`,
                     formData,
                     { headers: { "Content-Type": "multipart/form-data" } }
                 );
@@ -180,7 +180,7 @@ function AdminProductos() {
                 // Verifica la respuesta del servidor
                 if (response.status === 200) {
                     // Actualiza el estado de la lista de categorías y reinicia los estados de edición
-                    const updatedProductsResponse = await axios.get('https://mi-aplicacion-mu.vercel.app/productos');
+                    const updatedProductsResponse = await axios.get('http://localhost:5000/productos');
                     setProducts(updatedProductsResponse.data.products || []);
 
                     setUploadedFileNameProduct(response.data.message);
