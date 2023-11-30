@@ -13,7 +13,7 @@ const ProductosPorCategoria = (props) => {
   useEffect(() => {
     const fetchProductosPorCategoria = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/categorias/${id}/productos`);
+        const response = await axios.get(`https://mi-aplicacion-mu.vercel.app/categorias/${id}/productos`);
         const data = response.data;
         // console.log('Datos de productos:', data); // Registra los datos recibidos
         setCategoriaNombreEsp(data.categoria.nombreesp);

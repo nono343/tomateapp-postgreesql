@@ -11,7 +11,7 @@ const ProductSearch = ({ isSpanish, setIsSearching }) => {
     setSearchTerm(term);
 
     try {
-      const response = await axios.get(`http://localhost:5000/productos?nombre=${term}`);
+      const response = await axios.get(`https://mi-aplicacion-mu.vercel.app/productos?nombre=${term}`);
       const data = response.data;
       setSearchResults(data.products);
       setIsSearching(!!term.trim());

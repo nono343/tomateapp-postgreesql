@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 export const Navbar = (props) => {
     const [categories, setCategories] = useState([]);
     useEffect(() => {
-        axios.get('http://localhost:5000/categorias')
+        axios.get('https://mi-aplicacion-mu.vercel.app/categorias')
             .then((response) => {
                 setCategories(response.data.categories);
             })
