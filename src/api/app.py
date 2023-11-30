@@ -14,8 +14,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}  # Incluye la extensión 'we
 api = Flask(__name__)
 CORS(api)
 
-api.config["SECRET_KEY"] = "your_secret_key"  # Cambia esto por una clave segura
-api.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///flaskdb.db"
+api.config["SECRET_KEY"] = "ixo-OelcMkbkW_QIz2QbEB73jF6xlj_N"  # Cambia esto por una clave segura
+api.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 api.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(weeks=5200)  # 100 years

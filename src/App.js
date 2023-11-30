@@ -11,6 +11,7 @@ import Categorias from './pages/categorias';
 import Inicio from './pages/inicio';
 import DetalleProducto from './pages/productos';
 import { Navbar } from './components/Navbar';
+import ProductSearch from './components/ProductSearch';
 
 function App() {
   // Obtiene el token y las funciones relacionadas con el token usando el hook useToken
@@ -33,6 +34,8 @@ function App() {
     removeToken();
   };
 
+  const [isSearching, setIsSearching] = useState(false);
+
   // Renderiza el componente Navbar solo si existe un token válido
   return (
     <BrowserRouter>
@@ -45,29 +48,43 @@ function App() {
           onLogout={handleLogout}
         />
       )}
-
+  
+      {token && (
+        <ProductSearch
+          setIsSearching={setIsSearching}
+          token={token}
+          setToken={setToken}
+          isSpanish={isSpanish}
+          setIsSpanish={setIsSpanish}
+          onLogout={handleLogout}
+        />
+      )}
+  
       {/* Renderiza las rutas condicionalmente dependiendo de la existencia del token */}
       <Routes>
         {/* Rutas específicas */}
-        {token ? (
+        {token && !isSearching && (
           <>
-            <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish}  />} />
-            <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish}  />} />
-            <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} isSpanish={isSpanish}/>} />
+            <Route path='/inicio' element={<Inicio token={token} setToken={setToken} isSpanish={isSpanish} />} />
+            <Route path='/categorias/:id' element={<Categorias token={token} setToken={setToken} isSpanish={isSpanish} />} />
+            <Route path='/categorias/:categoria_id/productos/:producto_id' element={<DetalleProducto token={token} setToken={setToken} isSpanish={isSpanish} />} />
             {/* Ruta de administrador */}
             {isAdmin && <Route path='/admin' element={<Admin token={token} setToken={setToken} />} />}
           </>
-        ) : (
+        )}
+  
+        {!token && (
           // Ruta de inicio de sesión predeterminada
           <Route path='/*' element={<Navigate to="/" />} />
         )}
-
+  
         {/* Rutas de inicio de sesión y registro */}
         <Route path='/' element={<Login setToken={setToken} token={token} />} />
         <Route path='/register' element={<Register setToken={setToken} />} />
       </Routes>
     </BrowserRouter>
   );
-}
-
-export default App;
+  }
+  
+  export default App;
+  

@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import ProductSearch from '../components/ProductSearch';
 
 export default function Inicio(props) {
     const [categories, setCategories] = useState([]);
-    const [isSearching, setIsSearching] = useState(false);
 
 
     useEffect(() => {
@@ -25,9 +23,6 @@ export default function Inicio(props) {
 
 
     return (
-        <>
-            <ProductSearch isSpanish={props.isSpanish} setIsSearching={setIsSearching} />
-            {!isSearching && (
                 <div className=" py-5 max-w-screen-xl mx-auto">
                     <div className="container  m-auto px-6 text-gray-500 md:px-12">
                         <div className="grid gap-6 md:mx-auto md:w-8/12 lg:w-full lg:grid-cols-3">
@@ -49,8 +44,6 @@ export default function Inicio(props) {
                         </div>
                     </div>
                 </div>
-            )}
-        </>
     );
 }
 

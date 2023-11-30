@@ -29,9 +29,9 @@ const ProductosPorCategoria = (props) => {
 
 
   return (
-    <div className="relative text-center py-5 animate-fade-down">
-      <div className="container m-auto px-6 text-gray-500 md:px-12">
-        <h2 className="mb-5 text-2xl font-bold text-gray-800 dark:text-white md:text-4xl">
+    <div className=" py-5 max-w-screen-xl mx-auto">
+      <div className="container px-6 text-gray-500 md:px-12">
+        <h2 className="mb-5 text-2xl font-bold text-gray-800 dark:text-white md:text-4xl text-center">
           {props.isSpanish ? categoriaNombreEsp : categoriaNombreEng}
 
         </h2>
@@ -42,7 +42,7 @@ const ProductosPorCategoria = (props) => {
               key={producto.id}
               to={`/categorias/${id}/productos/${producto.id}`}
               // onClick={() => console.log(producto.id)} // Agrega este log para verificar
-              className="group space-y-1 border border-gray-100 dark:border-gray-700 rounded-3xl bg-white dark:bg-gray-800 px-8 py-12 text-center shadow-2xl shadow-gray-600/10 dark:shadow-none transition-transform transform hover:scale-105 duration-500 ease-in-out hover:shadow-2xl hover:border-red-400"
+              className="group space-y-1 border border-gray-100 dark:border-gray-700 rounded-3xl bg-white dark:bg-gray-800 px-8 py-12 text-center shadow-2xl shadow-gray-600/10 dark:shadow-none transition-transform transform hover:scale-105 duration-500 ease-in-out hover:shadow-2xl hover:border-green-400"
             >
               <img
                 className="mx-auto "  // Corregir la clase para establecer el ancho máximo
