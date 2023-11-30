@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import PickleType
 from uuid import uuid4
 
 db = SQLAlchemy()
@@ -71,12 +72,11 @@ class Productos(db.Model):
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
     foto = db.Column(db.String(120), nullable=False)
     foto2 = db.Column(db.String(120), nullable=True)
-    meses_produccion = db.relationship('MesesProduccion', backref='producto', cascade='all, delete-orphan')
+    meses_produccion = db.Column(db.String(50))  # Cambia el tipo según tus necesidades
     categoria_nombreesp_rel = db.relationship('Categorias', backref=db.backref('productos_rel', lazy=True))
     packagings = db.relationship('Packagings', backref='producto', cascade='all, delete-orphan')
 
-
-    def __init__(self, nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, foto, foto2):
+    def __init__(self, nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, foto, foto2, meses_produccion):
         self.nombreesp = nombreesp
         self.nombreeng = nombreeng
         self.descripcionesp = descripcionesp
@@ -84,6 +84,7 @@ class Productos(db.Model):
         self.categoria_id = categoria_id
         self.foto = foto
         self.foto2 = foto2
+        self.meses_produccion = meses_produccion
 
     def serialize(self):
         return {
@@ -93,37 +94,16 @@ class Productos(db.Model):
             'descripcionesp': self.descripcionesp,
             'descripcioneng': self.descripcioneng,
             'categoria_id': self.categoria_id,
-            'categoria_nombreesp': self.categoria.nombreesp,  # New field
+            'categoria_nombreesp': self.categoria.nombreesp,
             'foto': self.foto,
             'foto2': self.foto2,
-            # Otros campos si es necesario
+            'meses_produccion': self.meses_produccion.split(',') if self.meses_produccion else [],
+            'packagings': [packaging.serialize() for packaging in self.packagings],
+
         }
 
     def __repr__(self):
         return f'<Productos {self.nombreesp}>'
-
-
-# Modelo para los meses del año
-class MesesProduccion(db.Model):
-    __tablename__ = 'meses_produccion'
-    id = db.Column(db.Integer, primary_key=True)
-    mes = db.Column(db.String(255), nullable=False)
-    producto_id = db.Column(db.Integer, db.ForeignKey('productos.id', name='fk_productos_meses_producto_id'))
-
-    def __init__(self, mes, producto_id):
-        self.mes = mes
-        self.producto_id = producto_id
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'mes': self.mes,
-            'producto_id': self.producto_id,
-            # Otros campos si es necesario
-        }
-
-    def __repr__(self):
-        return f'<MesesProduccion {self.mes}>'
 
 
 class Packagings(db.Model):
@@ -141,6 +121,9 @@ class Packagings(db.Model):
     peso_neto_pallet_80x120_kg = db.Column(db.String(80), nullable=False)
     pallet_100x120 = db.Column(db.String(80), nullable=False)
     peso_neto_pallet_100x120_kg = db.Column(db.String(80), nullable=False)
+    pallet_avion = db.Column(db.String(80), nullable=False)
+    peso_neto_pallet_avion = db.Column(db.String(80), nullable=False)
+
     foto = db.Column(db.String(120), nullable=False)  
     foto2 = db.Column(db.String(120), nullable=True)
 
@@ -152,7 +135,7 @@ class Packagings(db.Model):
 
     def __init__(self, nombreesp, nombreeng, marca, presentacion, calibre, peso_presentacion_g, peso_neto_kg,
                  tamano_caja, pallet_80x120, peso_neto_pallet_80x120_kg, pallet_100x120,
-                 peso_neto_pallet_100x120_kg, foto, foto2, producto_id):
+                 peso_neto_pallet_100x120_kg, pallet_avion, peso_neto_pallet_avion, foto, foto2, producto_id):
         self.nombreesp = nombreesp
         self.nombreeng = nombreeng
         self.marca = marca
@@ -165,6 +148,8 @@ class Packagings(db.Model):
         self.peso_neto_pallet_80x120_kg = peso_neto_pallet_80x120_kg
         self.pallet_100x120 = pallet_100x120
         self.peso_neto_pallet_100x120_kg = peso_neto_pallet_100x120_kg
+        self.pallet_avion = pallet_avion
+        self.peso_neto_pallet_avion = peso_neto_pallet_avion
         self.foto = foto
         self.foto2 = foto2
         self.producto_id = producto_id

@@ -11,10 +11,11 @@ from datetime import datetime, timedelta, timezone
 import json
 from werkzeug.utils import secure_filename
 from app import api, bcrypt, db, jwt, flash, redirect
-from models import User,Categorias, Productos,MesesProduccion , Packagings   
+from models import User,Categorias, Productos , Packagings   
 from util import allowed_file  # Importa la función allowed_file desde util.py
 from flask import send_from_directory
 from unidecode import unidecode
+from sqlalchemy.orm import load_only
 
 
 
@@ -318,16 +319,21 @@ def upload_product():
             return jsonify({'error': 'At least one file is required'}), 400
 
         file = request.files['file']
-        file2 = request.files.get('file2')  # Use get to allow file2 to be None
+        file2 = request.files.get('file2')  
 
         if file.filename == '':
             return jsonify({'error': 'No selected file for the first photo'}), 400
 
-        nombreesp = request.form['nombreesp']
-        nombreeng = request.form['nombreeng']
-        descripcionesp = request.form['descripcionesp']
-        descripcioneng = request.form['descripcioneng']
-        categoria_id = request.form['categoria']
+        nombreesp = request.form.get('nombreesp', '')
+        nombreeng = request.form.get('nombreeng', '')
+        descripcionesp = request.form.get('descripcionesp', '')
+        descripcioneng = request.form.get('descripcioneng', '')
+        categoria_id = request.form.get('categoria', '')
+        mesesproduccion = request.form.getlist('mes_produccion')
+
+        # Validar que los campos requeridos no estén vacíos
+        if not all([nombreesp, nombreeng, descripcionesp, descripcioneng, categoria_id, mesesproduccion]):
+            return jsonify({'error': 'All fields are required'}), 400
 
         # Obtener el nombre de la categoría
         categoria = Categorias.query.get(categoria_id)
@@ -348,6 +354,9 @@ def upload_product():
 
             file.save(os.path.join(producto_folder, filename))
 
+            # Convierte la lista de meses a una cadena separada por comas
+            meses_produccion_str = ','.join(map(str, mesesproduccion))
+
             nuevo_producto = Productos(
                 nombreesp=nombreesp,
                 nombreeng=nombreeng,
@@ -356,6 +365,7 @@ def upload_product():
                 categoria_id=categoria_id,
                 foto=filename,
                 foto2=filename2,
+                meses_produccion=meses_produccion_str,
             )
 
             db.session.add(nuevo_producto)
@@ -443,7 +453,6 @@ def edit_product(producto_id):
 
 
 
-# Ruta para ver todos los productos
 @api.route('/productos', methods=['GET'])
 def get_products():
     try:
@@ -453,16 +462,14 @@ def get_products():
         # Realiza la consulta filtrando por el nombre del producto
         products = Productos.query.filter(Productos.nombreesp.ilike(f'%{search_term}%')).all()
 
-        # Resto del código para construir la respuesta (similar al anterior)
-        product_list = []  # Asegúrate de definir product_list
+        # Lista para almacenar los datos de los productos
+        product_list = []
 
         for product in products:
             # Consulta los packagings asociados a cada producto
             packagings = product.packagings  # Utiliza la relación packagings definida en el modelo Productos
 
-            # Consulta los meses de producción asociados a cada producto
-            meses = product.meses_produccion
-            meses_de_produccion = [{'id': mes.id, 'mes': mes.mes} for mes in meses]
+            meses_produccion = product.meses_produccion.split(',') if product.meses_produccion else []
 
             # Crea una lista de datos de packaging asociados al producto
             packaging_list = []
@@ -482,6 +489,8 @@ def get_products():
                     'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
                     'pallet_100x120': packaging.pallet_100x120,
                     'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
+                    'pallet_avion': packaging.pallet_avion,
+                    'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
                     'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
                     'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
                     'producto_id': packaging.producto_id,
@@ -501,14 +510,16 @@ def get_products():
                 'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto}",
                 'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto2}" if product.foto2 else None,
                 'packagings': packaging_list,
-                'meses_de_produccion': meses_de_produccion,
+                'meses_produccion': meses_produccion,
             }
             product_list.append(product_data)
 
-        return jsonify(products=product_list), 200
+        # Devuelve la lista de productos en formato JSON
+        return jsonify({'products': product_list}), 200
+
     except Exception as e:
-        # Manejo de errores
-        return jsonify({'error': str(e)}), 500
+        print(f"Error: {str(e)}")
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 
 
@@ -535,43 +546,6 @@ def borrar_producto(producto_id):
     return jsonify({'mensaje': 'Producto borrado correctamente'}), 200
 
 
-
-# Ruta para obtener los meses de producción asociados a un producto
-@api.route('/productos/<int:producto_id>/meses', methods=['GET'])
-def obtener_meses_de_produccion(producto_id):
-    try:
-        producto = Productos.query.get(producto_id)
-        meses = MesesProduccion.query.filter_by(producto_id=producto_id).all()
-
-        meses_de_produccion = [{'id': mes.id, 'mes': mes.mes} for mes in meses]
-
-        return jsonify(producto_id=producto_id, meses_de_produccion=meses_de_produccion), 200
-    except Exception as e:
-        print(f"Error al obtener los meses de producción del producto: {str(e)}")
-        return jsonify({'error': 'Error interno del servidor'}), 500
-
-# Ruta para agregar meses de producción a un producto
-@api.route('/productos/<int:producto_id>/meses/agregar', methods=['POST'])
-def agregar_meses_de_produccion(producto_id):
-    try:
-        data = request.get_json()
-        nuevos_meses = data.get('meses', [])
-
-        for nuevo_mes in nuevos_meses:
-            # Verifica si el mes ya existe para el producto
-            mes_existente = MesesProduccion.query.filter_by(mes=nuevo_mes, producto_id=producto_id).first()
-
-            if not mes_existente:
-                mes = MesesProduccion(mes=nuevo_mes, producto_id=producto_id)
-                db.session.add(mes)
-
-        db.session.commit()
-
-        return jsonify({'message': 'Meses de producción agregados con éxito'}), 201
-    except Exception as e:
-        print(f"Error al agregar los meses de producción al producto: {str(e)}")
-        db.session.rollback()
-        return jsonify({'error': 'Error interno del servidor'}), 500
 
 # Ruta para servir archivos estáticos de productos
 @api.route('/uploads/<categoria>/<nombreproducto>/<nombrepackaging>/<tamanocaja>/<calibre>/<filename>')
@@ -604,6 +578,9 @@ def upload_packaging():
         peso_neto_pallet_80x120_kg = request.form['peso_neto_pallet_80x120_kg']
         pallet_100x120 = request.form['pallet_100x120']
         peso_neto_pallet_100x120_kg = request.form['peso_neto_pallet_100x120_kg']
+        pallet_avion = request.form['pallet_avion']
+        peso_neto_pallet_avion = request.form['peso_neto_pallet_avion']
+
         producto_id = request.form['producto_id']
         user_ids = request.form.getlist('user_ids')
 
@@ -646,6 +623,8 @@ def upload_packaging():
                 peso_neto_pallet_80x120_kg=peso_neto_pallet_80x120_kg,
                 pallet_100x120=pallet_100x120,
                 peso_neto_pallet_100x120_kg=peso_neto_pallet_100x120_kg,
+                pallet_avion=pallet_avion,
+                peso_neto_pallet_avion=peso_neto_pallet_avion,
                 foto=filename,
                 foto2=filename2,
                 producto_id=producto_id
@@ -701,6 +680,8 @@ def get_packagings():
                 'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
                 'pallet_100x120': packaging.pallet_100x120,
                 'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
+                'pallet_avion': packaging.pallet_avion,
+                'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
                 'foto': foto_url,
                 'foto2': foto2_url,
                 'producto_id': packaging.producto_id,
@@ -803,63 +784,70 @@ def search_products_in_category(categoria_id):
         return jsonify({'error': str(e)}), 500
 
 
-# Ruta para obtener la información completa de un producto por su ID y categoría por su ID
 @api.route('/categorias/<int:categoria_id>/productos/<int:producto_id>', methods=['GET'])
 def get_product_info_by_category(categoria_id, producto_id):
-    categoria = Categorias.query.get(categoria_id)
+    try:
+        # Consulta el producto y sus datos asociados
+        producto = Productos.query.get(producto_id)
 
-    if categoria:
-        producto = Productos.query.filter_by(id=producto_id, categoria_id=categoria_id).first()
+        if not producto:
+            return jsonify({'error': 'Producto no encontrado'}), 404
 
-        if producto:
-            # Obtener packagings del producto
-            packagings = Packagings.query.filter_by(producto_id=producto_id).all()
+        # Consulta los packagings asociados al producto
+        packagings = producto.packagings
 
-            # Obtener meses de producción del producto
-            meses_produccion = MesesProduccion.query.filter_by(producto_id=producto_id).all()
+        # Lista para almacenar los datos de los packagings
+        packaging_list = []
 
-            # Crear un diccionario con la información del producto, packagings y meses de producción
-            product_info = {
-                "categoria": categoria.serialize(),
-                "producto": producto.serialize(),
-                "packagings": [],
-                "meses_produccion": [mes.serialize() for mes in meses_produccion]
+        for packaging in packagings:
+            users = [user.serialize() for user in packaging.users]  # Obtén la información de los usuarios asociados al packaging
+            packaging_data = {
+                'id': packaging.id,
+                'nombreesp': packaging.nombreesp,
+                'nombreeng': packaging.nombreeng,
+                'marca': packaging.marca,
+                'presentacion': packaging.presentacion,
+                'calibre': packaging.calibre,
+                'peso_presentacion_g': packaging.peso_presentacion_g,
+                'peso_neto_kg': packaging.peso_neto_kg,
+                'tamano_caja': packaging.tamano_caja,
+                'pallet_80x120': packaging.pallet_80x120,
+                'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
+                'pallet_100x120': packaging.pallet_100x120,
+                'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
+                'pallet_avion': packaging.pallet_avion,
+                'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
+                'foto_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                'foto2_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
+                'producto_id': packaging.producto_id,
+                'users': users,
             }
+            packaging_list.append(packaging_data)
 
-            # Agregar la URL de las fotos de los productos al diccionario
-            product_info["producto"]["foto_url"] = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto}"
-            product_info["producto"]["foto2_url"] = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto2}" if producto.foto2 else None
+        # Construye el diccionario con los datos del producto y sus packagings
+        product_data = {
+            'id': producto.id,
+            'nombreesp': producto.nombreesp,
+            'nombreeng': producto.nombreeng,
+            'descripcionesp': producto.descripcionesp,
+            'descripcioneng': producto.descripcioneng,
+            'categoria_id': producto.categoria_id,
+            'categoria_nombreesp': producto.categoria_nombreesp_rel.nombreesp if producto.categoria_nombreesp_rel else None,
+            'foto_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto}",
+            'foto2_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto2}" if producto.foto2 else None,
+            'packagings': packaging_list,
+            'meses_produccion': producto.meses_produccion.split(',') if producto.meses_produccion else [],
+        }
 
-            # Agregar la URL de las fotos de los packagings al diccionario
-            for packaging in packagings:
-                packaging_data = {
-                    'id': packaging.id,
-                    'nombreesp': packaging.nombreesp,
-                    'nombreeng': packaging.nombreeng,
-                    'marca': packaging.marca,
-                    'presentacion': packaging.presentacion,
-                    'calibre': packaging.calibre,
-                    'peso_presentacion_g': packaging.peso_presentacion_g,
-                    'peso_neto_kg': packaging.peso_neto_kg,
-                    'tamano_caja': packaging.tamano_caja,
-                    'pallet_80x120': packaging.pallet_80x120,
-                    'peso_neto_pallet_80x120_kg': packaging.peso_neto_pallet_80x120_kg,
-                    'pallet_100x120': packaging.pallet_100x120,
-                    'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
-                    'users': [user.serialize() for user in packaging.users],
-                    'foto_url': f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
-                    'foto2_url': f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{packaging.nombreesp.replace(' ', '_')}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None
-                }
-                product_info["packagings"].append(packaging_data)
+        # Devuelve la información en formato JSON
+        return jsonify({'producto': product_data}), 200
 
-            return jsonify(product_info)
-        else:
-            return jsonify({"error": "Producto no encontrado en la categoría especificada"}), 404
-    else:
-        return jsonify({"error": "Categoría no encontrada"}), 404
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
 
 # Nueva ruta para eliminar packagings
-import os
 
 @api.route('/packagings/<int:packaging_id>', methods=['DELETE'])
 def delete_packaging(packaging_id):

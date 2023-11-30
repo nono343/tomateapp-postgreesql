@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import logo from "../assets/LaPalma.png"
 
 function AdminPackaging(props) {
     const [selectedFilePackaging, setSelectedFilePackaging] = useState(null);
@@ -16,6 +17,8 @@ function AdminPackaging(props) {
     const [pesoNetoPallet80x120, setPesoNetoPallet80x120] = useState('');
     const [pallet100x120, setPallet100x120] = useState('');
     const [pesoNetoPallet100x120, setPesoNetoPallet100x120] = useState('');
+    const [palletAvion, setPalletAvion] = useState('');
+    const [pesoNetoPalletAvion, setPesoNetoPalletAvion] = useState('');
     const [productoId, setProductoId] = useState('');
     const [userIds, setUserIds] = useState([]);
     const [availableUsers, setAvailableUsers] = useState([]);
@@ -160,6 +163,8 @@ function AdminPackaging(props) {
             formData.append('peso_neto_pallet_80x120_kg', pesoNetoPallet80x120);
             formData.append('pallet_100x120', pallet100x120);
             formData.append('peso_neto_pallet_100x120_kg', pesoNetoPallet100x120);
+            formData.append('pallet_avion', palletAvion);
+            formData.append('peso_neto_pallet_avion', pesoNetoPalletAvion);
             formData.append('producto_id', productIds);
 
             userIds.forEach((userId) => {
@@ -318,8 +323,6 @@ function AdminPackaging(props) {
     });
 
 
-
-
     const [editingPackaging, setEditingPackaging] = useState(null);
     const [editedUsers, setEditedUsers] = useState([]);
     const [allUsers, setAllUsers] = useState([]);  // Nuevo estado para todos los usuarios
@@ -334,7 +337,7 @@ function AdminPackaging(props) {
             .catch(error => {
                 console.error('Error al obtener los packagings:', error);
             });
-        
+
         // Realizar la solicitud GET para obtener todos los usuarios
         axios.get('http://localhost:5000/users')
             .then(response => {
@@ -344,7 +347,7 @@ function AdminPackaging(props) {
                 console.error('Error al obtener todos los usuarios:', error);
             });
     }, []); // Se ejecuta solo una vez al montar el componente
-    
+
     const handleEditUsers = (packaging) => {
         setEditingPackaging(packaging);
         setEditedUsers([...packaging.users]);
@@ -389,183 +392,30 @@ function AdminPackaging(props) {
         });
     };
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalImageUrl, setModalImageUrl] = useState('');
+
+    const openImageModal = (imageUrl) => {
+        setModalImageUrl(imageUrl);
+        document.getElementById('image_modal').showModal();
+        setIsModalOpen(true);
+    };
+
+    const closeImageModal = () => {
+        setModalImageUrl('');
+        document.getElementById('image_modal').close();
+        setIsModalOpen(false);
+    };
+
+
 
     return (
         <div className='animate-flip-down max-w-screen-xl mx-auto px-10'>
-        <form className="grid md:grid-cols-3 gap-6 mb-5">
-            <div className="form-control w-full max-w-xs">
-                <select
-                    id="name_packaging_esp"
-                    className="input input-bordered w-full max-w-xs"
-                    value={nombreesp}
-                    onChange={handleNombreEspChange}
-                    required
-                >
-                    <option value="" disabled>
-
-                        Packaging
-                    </option>
-                    {Object.keys(nombresMappings).map((nombreEspOption) => (
-                        <option key={nombreEspOption} value={nombreEspOption}>
-                            {nombreEspOption}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="name_packaging_eng"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Nombre Packaging Ingles"
-                    value={nombreeng}
-                    readOnly
-                    required
-                    disabled
-                />
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <select
-                    id="name_marca_esp"
-                    className="input input-bordered w-full max-w-xs"
-                    value={marca}
-                    onChange={handleMarcaChange}
-                    required
-                >
-                    <option value="" disabled>
-
-                        Marca
-                    </option>
-                    {Object.keys(marcasMapping).map((marcasOption) => (
-                        <option key={marcasOption} value={marcasOption}>
-                            {marcasOption}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="presentacion"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Unidades"
-                    value={presentacion}
-                    onChange={(e) => setPresentacion(e.target.value)}
-                    required
-                />
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <select
-                    id="calibre"
-                    className="input input-bordered w-full max-w-xs"
-                    value={calibre}
-                    onChange={handleCalibreChange}
-                    required
-                >
-                    <option value="" disabled>
-
-                        Calibre
-                    </option>
-                    {Object.keys(calibreMapping).map((calibresOption) => (
-                        <option key={calibresOption} value={calibresOption}>
-                            {calibresOption}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="form-control w-full max-w-xs">
-                <select
-                    id="tamanocaja"
-                    className="input input-bordered w-full max-w-xs"
-                    value={tamanoCaja}
-                    onChange={handleMedidasPackagingChange}
-                    required
-                >
-                    <option value="" disabled>
-
-                        Tamaño de la Caja
-                    </option>
-                    {Object.keys(medidasPackaging).map((medidasOption) => (
-                        <option key={medidasOption} value={medidasOption}>
-                            {medidasOption}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="pesopresentacion"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Peso Neto Confección (g)"
-                    onChange={(e) => setPesoPresentacion(e.target.value)}
-                    onBlur={handlePesoNetoCalculo}
-                    required
-
-                />
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="pesoneto"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Peso Neto Confección (kg)"
-                    value={pesoNeto}
-                    readOnly
-                    disabled
-                />
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="pallet80x120"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Unidades Por Pallet 80x120"
-                    onChange={(e) => setPallet80x120(e.target.value)}
-                    onBlur={() => handlePesoNetoPalletCalculo(pallet80x120, setPesoNetoPallet80x120)}
-                    required
-                />
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="pesoNetoPallet80x120"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Peso Neto Pallet 80x120 (kg)"
-                    value={pesoNetoPallet80x120}
-                    readOnly
-                    disabled
-                />
-            </div>
-
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="pallet100x120"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Unidades Por Pallet 100x120"
-                    onChange={(e) => setPallet100x120(e.target.value)}
-                    onBlur={() => handlePesoNetoPalletCalculo(pallet100x120, setPesoNetoPallet100x120)}
-                    required
-                />
-            </div>
-            <div className="form-control w-full max-w-xs">
-                <input
-                    type="text"
-                    id="pesoNetoPallet100x120"
-                    className="input input-bordered w-full max-w-xs"
-                    placeholder="Peso Neto Pallet 100x120 (kg)"
-                    value={pesoNetoPallet100x120}
-                    readOnly
-                    disabled
-                />
-            </div>
-
-            <div className="form-control w-full max-w-xs">
-                {availableProducts.length > 0 && (
+            <form className="grid md:grid-cols-3 gap-6 mb-5">
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Selecciona un producto</span>
+                    </label>
                     <select
                         className="select select-bordered w-full max-w-xs"
                         value={productIds}
@@ -580,196 +430,453 @@ function AdminPackaging(props) {
                             </option>
                         ))}
                     </select>
-                )}
-            </div>
-
-
-            {/* Mostrar nombres de usuarios disponibles */}
-            {availableUsers.length > 0 && (
-                <div className="form-control">
-                    <p>Usuarios disponibles:</p>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {availableUsers.map((user) => (
-                            <li key={user.id} style={{ display: 'inline-block', marginRight: '10px' }}>
-                                <label className="cursor-pointer label">
-                                    <input
-                                        type="checkbox"
-                                        value={user.id}
-                                        onChange={() => handlePackagingCheckboxChange(user.id, 'user')}
-                                        checked={userIds.includes(String(user.id))} // Convertir a cadena para la comparación
-                                        className="checkbox checkbox-success"
-                                    />
-                                    <span className="label-text ml-2">{user.username}</span>
-                                </label>
-                            </li>
-                        ))}
-                    </ul>
                 </div>
-            )}
 
-            <div className="form-control">
-                <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange1} required />
-            </div>
-            <div className="form-control mt-3">
-                <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange2} required />
-            </div>
-            <div className='mx-auto md:col-start-2 mt-5 '>
-                <button onClick={handleSubmit} type="button" className="btn btn-outline btn-success">Crear Packaging</button>
-            </div>
-        </form>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Nombre Packaging</span>
+                    </label>
+                    <select
+                        id="name_packaging_esp"
+                        className="input input-bordered w-full max-w-xs"
+                        value={nombreesp}
+                        onChange={handleNombreEspChange}
+                        required
+                    >
+                        <option value="" disabled>
+                            Selecciona el tipo de Packaging
+                        </option>
+                        {Object.keys(nombresMappings).map((nombreEspOption) => (
+                            <option key={nombreEspOption} value={nombreEspOption}>
+                                {nombreEspOption}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Nombre Packaging Inglés</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="name_packaging_eng"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Nombre Packaging Ingles"
+                        value={nombreeng}
+                        readOnly
+                        required
+                        disabled
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Marca Caja Packaging</span>
+                    </label>
+                    <select
+                        id="name_marca_esp"
+                        className="input input-bordered w-full max-w-xs"
+                        value={marca}
+                        onChange={handleMarcaChange}
+                        required
+                    >
+                        <option value="" disabled>
+
+                            Selecciona la Marca de la Caja
+                        </option>
+                        {Object.keys(marcasMapping).map((marcasOption) => (
+                            <option key={marcasOption} value={marcasOption}>
+                                {marcasOption}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Unidades por Confección</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="presentacion"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Unidades"
+                        value={presentacion}
+                        onChange={(e) => setPresentacion(e.target.value)}
+                        required
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Calibre</span>
+                    </label>
+                    <select
+                        id="calibre"
+                        className="input input-bordered w-full max-w-xs"
+                        value={calibre}
+                        onChange={handleCalibreChange}
+                        required
+                    >
+                        <option value="" disabled>
+                            Selecciona el calibre del Producto
+                        </option>
+                        {Object.keys(calibreMapping).map((calibresOption) => (
+                            <option key={calibresOption} value={calibresOption}>
+                                {calibresOption}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Medidas de la Caja</span>
+                    </label>
+                    <select
+                        id="tamanocaja"
+                        className="input input-bordered w-full max-w-xs"
+                        value={tamanoCaja}
+                        onChange={handleMedidasPackagingChange}
+                        required
+                    >
+                        <option value="" disabled>
+                            Selecciona la Medida de la Caja
+                        </option>
+                        {Object.keys(medidasPackaging).map((medidasOption) => (
+                            <option key={medidasOption} value={medidasOption}>
+                                {medidasOption}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Peso Neto de la Unidad (g)</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pesopresentacion"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Introduce el Peso Neto Confección (g)"
+                        onChange={(e) => setPesoPresentacion(e.target.value)}
+                        onBlur={handlePesoNetoCalculo}
+                        required
+
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Peso Neto Confección (Kg)</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pesoneto"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Peso Neto Confección (kg)"
+                        value={pesoNeto}
+                        readOnly
+                        disabled
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Cajas por Pallet 80x120</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pallet80x120"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Introduce Cajas por Pallet 80x120"
+                        onChange={(e) => setPallet80x120(e.target.value)}
+                        onBlur={() => handlePesoNetoPalletCalculo(pallet80x120, setPesoNetoPallet80x120)}
+                        required
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Peso Neto Pallet 80x120 (kg)</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pesoNetoPallet80x120"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Peso Neto Pallet 80x120 (kg)"
+                        value={pesoNetoPallet80x120}
+                        readOnly
+                        disabled
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Cajas por Pallet 100x120</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pallet100x120"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Unidades Por Pallet 100x120"
+                        onChange={(e) => setPallet100x120(e.target.value)}
+                        onBlur={() => handlePesoNetoPalletCalculo(pallet100x120, setPesoNetoPallet100x120)}
+                        required
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Peso Neto Pallet 100x120 (kg)</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pesoNetoPallet100x120"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Peso Neto Pallet 100x120 (kg)"
+                        value={pesoNetoPallet100x120}
+                        readOnly
+                        disabled
+                    />
+                </div>
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Cajas por Pallet Avión</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="palletAvion"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Introduce Cajas por Pallet Avion"
+                        onChange={(e) => setPalletAvion(e.target.value)}
+                        onBlur={() => handlePesoNetoPalletCalculo(palletAvion, setPesoNetoPalletAvion)}
+                        required
+                    />
+                </div>
+
+                <div className="form-control w-full max-w-xs">
+                    <label className="label">
+                        <span className="label-text">Peso Neto Pallet Avión (kg)</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="pesoNetoPallet80x120"
+                        className="input input-bordered w-full max-w-xs"
+                        placeholder="Peso Neto Pallet Avion"
+                        value={pesoNetoPalletAvion}
+                        readOnly
+                        disabled
+                    />
+                </div>
 
 
-        <div className="overflow-x-auto">
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Foto Unidad</th>
-                        <th>Foto Confección</th>
-                        <th>
-                            <select
-                                value={filters.nombreproducto}
-                                onChange={(e) => handleFilterChange('nombreproducto', e.target.value)}
-                                className="border border-gray-300 px-2 py-1"
-                            >
-                                <option value="">Seleccionar</option>
-                                {getUniqueValues('nombreproducto').map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </th>
-                        <th>
-                            <select
-                                className="border border-gray-300 px-2 py-1"
-                                value={filters.nombreesp}
-                                onChange={(e) => handleFilterChange('nombreesp', e.target.value)}
-                            >
-                                <option value="">Seleccionar</option>
-                                {getUniqueValues('nombreesp').map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </th>
-                        <th>
-                            <select
-                                value={filters.marca}
-                                onChange={(e) => handleFilterChange('marca', e.target.value)}
-                                className="border border-gray-300 px-2 py-1"
-                            >
-                                <option value="">Seleccionar</option>
-                                {getUniqueValues('marca').map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </th>
-                        <th>                <select
-                            value={filters.calibre}
-                            onChange={(e) => handleFilterChange('calibre', e.target.value)}
-                            className="border border-gray-300 px-2 py-1"
-                        >
-                            <option value="">Seleccionar Calibre</option>
-                            {getUniqueValues('calibre').map((option) => (
-                                <option key={option} value={option}>
-                                    {option}
-                                </option>
+
+                {/* Mostrar nombres de usuarios disponibles */}
+                {availableUsers.length > 0 && (
+                    <div className="form-control">
+                        <p>Usuarios disponibles:</p>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                            {availableUsers.map((user) => (
+                                <li key={user.id} style={{ display: 'inline-block', marginRight: '10px' }}>
+                                    <label className="cursor-pointer label">
+                                        <input
+                                            type="checkbox"
+                                            value={user.id}
+                                            onChange={() => handlePackagingCheckboxChange(user.id, 'user')}
+                                            checked={userIds.includes(String(user.id))} // Convertir a cadena para la comparación
+                                            className="checkbox checkbox-success"
+                                        />
+                                        <span className="label-text ml-2">{user.username}</span>
+                                    </label>
+                                </li>
                             ))}
-                        </select>
-                        </th>
-                        <th>Unidades</th>
-                        <th>Peso Packaging (g)</th>
-                        <th>Peso Neto Confección (kg)</th>
-                        <th>Tamaño Caja</th>
-                        <th>Unidades Pallet 80x120</th>
-                        <th>Peso Neto Pallet 80x120 (kg)</th>
-                        <th>Unidades Pallet 100x120</th>
-                        <th>Peso Neto Pallet 100x120 (kg)</th>
-                        <th>Clientes</th>
-                        <th>Editar Usuarios</th>
-                        <th>Eliminar Packaging</th>
-                    </tr>
-                </thead>
-                <tbody className='text-center'>
-                    {filteredPackagings.map((packaging) => (
-                        <tr key={packaging.id}>
-                            <td className="py-2 px-4 border-b"><img
-                                src={packaging.foto}
-                                alt={packaging.nombreesp}
-                                className="max-w-full h-auto"
-                            />
-                            </td>
-                            <td className="py-2 px-4 border-b"><img
-                                src={packaging.foto2}
-                                alt={packaging.nombreesp}
-                                className="max-w-full h-auto"
-                            />
-                            </td>
-                            <td className="py-2 px-4 border-b">{packaging.nombreproducto}</td>
-                            <td className="py-2 px-4 border-b">{packaging.nombreesp}</td>
-                            <td className="py-2 px-4 border-b">{packaging.marca}</td>
-                            <td className="py-2 px-4 border-b">{packaging.calibre}</td>
-                            <td className="py-2 px-4 border-b">{packaging.presentacion}</td>
-                            <td className="py-2 px-4 border-b">{packaging.peso_presentacion_g}</td>
-                            <td className="py-2 px-4 border-b">{packaging.peso_neto_kg}</td>
-                            <td className="py-2 px-4 border-b">{packaging.tamano_caja}</td>
-                            <td className="py-2 px-4 border-b">{packaging.pallet_80x120}</td>
-                            <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_80x120_kg}</td>
-                            <td className="py-2 px-4 border-b">{packaging.pallet_100x120}</td>
-                            <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_100x120_kg}</td>
-                            <td className="py-2 px-4 border-b">
-                                {editingPackaging && editingPackaging.id === packaging.id ? (
-                                    // Mostrar checkboxes para todos los usuarios disponibles en modo de edición
-                                    allUsers.map(user => (
-                                        <div key={user.id} className="flex items-center mb-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={editedUsers.some((u) => u.id === user.id)}
-                                                onChange={() => handleUserCheckboxChange(user)}
-                                                className="checkbox checkbox-success"
+                        </ul>
+                    </div>
+                )}
 
-                                            />
-                                            <span className="ml-2">{user.username}</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    // Mostrar solo los usuarios asociados en modo de visualización normal
-                                    packaging.users.map(user => (
-                                        <div key={user.id}>{user.username}</div>
-                                    ))
-                                )}
-                            </td>
+                <div className="form-control">
+                    <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange1} required />
+                </div>
+                <div className="form-control mt-3">
+                    <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange2} required />
+                </div>
+                <div className='mx-auto md:col-start-2 mt-5 '>
+                    <button onClick={handleSubmit} type="button" className="btn btn-outline btn-success">Crear Packaging</button>
+                </div>
+            </form>
 
-                            <td className="py-2 px-4 border-b">
-                                {editingPackaging && editingPackaging.id === packaging.id ? (
-                                    // Mostrar botones de guardado y cancelación durante la edición
-                                    <>
-                                        <button className="btn btn-outline btn-success mb-1" onClick={handleSaveUsers}>Guardar</button>
-                                        <button className="btn btn-outline btn-error" onClick={handleCancelEdit}>Cancelar</button>
-                                    </>
-                                ) : (
-                                    // Mostrar botón de editar en modo de visualización normal
-                                    <button className="btn btn-outline btn-warning" onClick={() => handleEditUsers(packaging)}>Editar Usuarios</button>
-                                )}
-                            </td>
 
-                            <td className="py-2 px-4 border-b">
-                                <button
-                                    onClick={() => handleDeletePackaging(packaging.id)}
-                                    className="btn btn-outline btn-danger"
+            <div className="overflow-x-auto">
+                <table className="table">
+                    <thead>
+                        <tr>
+                            <th>Foto Unidad</th>
+                            <th>Foto Confección</th>
+                            <th>
+                                <select
+                                    value={filters.nombreproducto}
+                                    onChange={(e) => handleFilterChange('nombreproducto', e.target.value)}
+                                    className="border border-gray-300 px-2 py-1"
                                 >
-                                    Eliminar
-                                </button>
-                            </td>
+                                    <option value="">Seleccionar</option>
+                                    {getUniqueValues('nombreproducto').map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </th>
+                            <th>
+                                <select
+                                    className="border border-gray-300 px-2 py-1"
+                                    value={filters.nombreesp}
+                                    onChange={(e) => handleFilterChange('nombreesp', e.target.value)}
+                                >
+                                    <option value="">Seleccionar</option>
+                                    {getUniqueValues('nombreesp').map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </th>
+                            <th>
+                                <select
+                                    value={filters.marca}
+                                    onChange={(e) => handleFilterChange('marca', e.target.value)}
+                                    className="border border-gray-300 px-2 py-1"
+                                >
+                                    <option value="">Seleccionar</option>
+                                    {getUniqueValues('marca').map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </th>
+                            <th>                <select
+                                value={filters.calibre}
+                                onChange={(e) => handleFilterChange('calibre', e.target.value)}
+                                className="border border-gray-300 px-2 py-1"
+                            >
+                                <option value="">Seleccionar Calibre</option>
+                                {getUniqueValues('calibre').map((option) => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                            </th>
+                            <th>Unidades</th>
+                            <th>Peso Packaging (g)</th>
+                            <th>Peso Neto Confección (kg)</th>
+                            <th>Tamaño Caja</th>
+                            <th>Unidades Pallet 80x120</th>
+                            <th>Peso Neto Pallet 80x120 (kg)</th>
+                            <th>Unidades Pallet 100x120</th>
+                            <th>Peso Neto Pallet 100x120 (kg)</th>
+                            <th>Unidades Pallet Avión</th>
+                            <th>Peso Neto Pallet Avión (kg)</th>
+                            <th>Clientes</th>
+                            <th>Editar Usuarios</th>
+                            <th>Eliminar Packaging</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className='text-center'>
+                        {filteredPackagings.map((packaging) => (
+                            <tr key={packaging.id}>
+                                <td className="py-2 px-4 border-b">
+                                    <img
+                                        src={packaging.foto}
+                                        alt={packaging.nombreesp}
+                                        className="max-w-full h-auto cursor-pointer"
+                                        onClick={() => openImageModal(packaging.foto)}
+                                    />
+                                </td>
+                                <td className="py-2 px-4 border-b">
+                                    {packaging.foto2 ? (
+                                        <img
+                                            src={packaging.foto2}
+                                            alt={packaging.nombreesp}
+                                            className="max-w-full h-auto cursor-pointer"
+                                            onClick={() => openImageModal(packaging.foto2)}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={logo}
+                                            className="max-w-full h-auto cursor-pointer"
+                                        />
+                                    )}
+                                </td>
+                                <td className="py-2 px-4 border-b">{packaging.nombreproducto}</td>
+                                <td className="py-2 px-4 border-b">{packaging.nombreesp}</td>
+                                <td className="py-2 px-4 border-b">{packaging.marca}</td>
+                                <td className="py-2 px-4 border-b">{packaging.calibre}</td>
+                                <td className="py-2 px-4 border-b">{packaging.presentacion}</td>
+                                <td className="py-2 px-4 border-b">{packaging.peso_presentacion_g}</td>
+                                <td className="py-2 px-4 border-b">{packaging.peso_neto_kg}</td>
+                                <td className="py-2 px-4 border-b">{packaging.tamano_caja}</td>
+                                <td className="py-2 px-4 border-b">{packaging.pallet_80x120}</td>
+                                <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_80x120_kg}</td>
+                                <td className="py-2 px-4 border-b">{packaging.pallet_100x120}</td>
+                                <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_100x120_kg}</td>
+                                <td className="py-2 px-4 border-b">{packaging.pallet_avion}</td>
+                                <td className="py-2 px-4 border-b">{packaging.peso_neto_pallet_avion}</td>
+                                <td className="py-2 px-4 border-b">
+                                    {editingPackaging && editingPackaging.id === packaging.id ? (
+                                        // Mostrar checkboxes para todos los usuarios disponibles en modo de edición
+                                        allUsers.map(user => (
+                                            <div key={user.id} className="flex items-center mb-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editedUsers.some((u) => u.id === user.id)}
+                                                    onChange={() => handleUserCheckboxChange(user)}
+                                                    className="checkbox checkbox-success"
+
+                                                />
+                                                <span className="ml-2">{user.username}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        // Mostrar solo los usuarios asociados en modo de visualización normal
+                                        packaging.users.map(user => (
+                                            <div key={user.id}>{user.username}</div>
+                                        ))
+                                    )}
+                                </td>
+
+                                <td className="py-2 px-4 border-b">
+                                    {editingPackaging && editingPackaging.id === packaging.id ? (
+                                        // Mostrar botones de guardado y cancelación durante la edición
+                                        <>
+                                            <button className="btn btn-outline btn-success mb-1" onClick={handleSaveUsers}>Guardar</button>
+                                            <button className="btn btn-outline btn-error" onClick={handleCancelEdit}>Cancelar</button>
+                                        </>
+                                    ) : (
+                                        // Mostrar botón de editar en modo de visualización normal
+                                        <button className="btn btn-outline btn-warning" onClick={() => handleEditUsers(packaging)}>Editar Usuarios</button>
+                                    )}
+                                </td>
+
+                                <td className="py-2 px-4 border-b">
+                                    <button
+                                        onClick={() => handleDeletePackaging(packaging.id)}
+                                        className="btn btn-outline btn-danger"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {/* Modal */}
+                <dialog id="image_modal" className={`modal ${isModalOpen ? 'open' : ''}`}>
+                    <div className="modal-box">
+                        <form method="dialog">
+                            <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={closeImageModal}>✕</button>
+                        </form>
+                        <img id="modal_image" alt="Modal" src={modalImageUrl} className="w-full h-full object-cover" />
+                    </div>
+                </dialog>
+
+            </div>
         </div>
-    </div>
 
     );
 }
