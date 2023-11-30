@@ -43,7 +43,7 @@ def create_token():
     print("Username:", user.username)
 
     # Modifica la creación del token para incluir la ruta completa de la foto
-    foto_path = url_for('static', filename=f"uploads/{user.foto}") if user.foto else None
+    foto_path = f"http://localhost:5000/uploads/{user.foto}" if user.foto else None
 
 
     # Crea el token con información adicional en la carga útil
@@ -492,8 +492,8 @@ def get_products():
                     'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
                     'pallet_avion': packaging.pallet_avion,
                     'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
-                    'foto_url': url_for('static', filename=f"uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}"),
-                    'foto2_url': url_for('static', filename=f"uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}") if packaging.foto2 else None,
+                    'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                    'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
                     'producto_id': packaging.producto_id,
                     'users': users,  # Agrega la lista de usuarios al diccionario de packaging_data
                 }
@@ -508,8 +508,8 @@ def get_products():
                 'descripcioneng': product.descripcioneng,
                 'categoria_id': product.categoria_id,
                 'categoria_nombreesp': product.categoria_nombreesp_rel.nombreesp if product.categoria_nombreesp_rel else None,
-                'foto_url': url_for('static', filename=f"uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto}"),
-                'foto2_url': url_for('static', filename=f"uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto2}") if product.foto2 else None,
+                'foto_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto}",
+                'foto2_url': f"http://localhost:5000/uploads/{product.categoria_nombreesp_rel.nombreesp}/{product.nombreesp}/{product.foto2}" if product.foto2 else None,
                 'packagings': packaging_list,
                 'meses_produccion': meses_produccion,
             }
@@ -664,8 +664,9 @@ def get_packagings():
             packaging.producto.nombre = packaging.producto.nombreesp if packaging.producto else None
 
             # Forma las URL completas para las fotos
-            foto_url = url_for('static', filename=f"uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}")
-            foto2_url = url_for('static', filename=f"uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}") if packaging.foto2 else None
+            foto_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}"
+            foto2_url = f"http://localhost:5000/uploads/{packaging.categoria_nombreesp}/{packaging.producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None
+
 
             packaging_data = {
                 'id': packaging.id,
@@ -766,7 +767,8 @@ def search_products_in_category(categoria_id):
 
         for producto in productos:
             # Formar la URL de la foto del producto
-            foto_url = url_for('static', filename=f"uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto}")
+            foto_url = f"http://localhost:5000/uploads/{categoria.nombreesp}/{producto.nombreesp}/{producto.foto}"
+
 
             # Agregar información relevante del producto a la lista
             producto_info = {
@@ -818,8 +820,8 @@ def get_product_info_by_category(categoria_id, producto_id):
                 'peso_neto_pallet_100x120_kg': packaging.peso_neto_pallet_100x120_kg,
                 'pallet_avion': packaging.pallet_avion,
                 'peso_neto_pallet_avion': packaging.peso_neto_pallet_avion,
-                'foto_url': url_for('static', filename=f"uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}"),
-                'foto2_url': url_for('static', filename=f"uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}") if packaging.foto2 else None,
+                'foto_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto}",
+                'foto2_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{unidecode(packaging.nombreesp.replace(' ', '_'))}/{packaging.tamano_caja.replace('*', '')}/{packaging.calibre}/{packaging.foto2}" if packaging.foto2 else None,
                 'producto_id': packaging.producto_id,
                 'users': users,
             }
@@ -834,8 +836,9 @@ def get_product_info_by_category(categoria_id, producto_id):
             'descripcioneng': producto.descripcioneng,
             'categoria_id': producto.categoria_id,
             'categoria_nombreesp': producto.categoria_nombreesp_rel.nombreesp if producto.categoria_nombreesp_rel else None,
-            'foto_url': url_for('static', filename=f"uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto}"),
-            'foto2_url': url_for('static', filename=f"uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto2}") if producto.foto2 else None,
+            'foto_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto}",
+            'foto2_url': f"http://localhost:5000/uploads/{producto.categoria_nombreesp_rel.nombreesp}/{producto.nombreesp}/{producto.foto2}" if producto.foto2 else None,
+
             'packagings': packaging_list,
             'meses_produccion': producto.meses_produccion.split(',') if producto.meses_produccion else [],
         }
