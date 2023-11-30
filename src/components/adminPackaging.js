@@ -663,8 +663,6 @@ function AdminPackaging(props) {
                     />
                 </div>
 
-
-
                 {/* Mostrar nombres de usuarios disponibles */}
                 {availableUsers.length > 0 && (
                     <div className="form-control">
@@ -687,19 +685,22 @@ function AdminPackaging(props) {
                         </ul>
                     </div>
                 )}
-
                 <div className="form-control">
+                    <label className="label">
+                        <span className="label-text">Foto Unidad</span>
+                    </label>
                     <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange1} required />
                 </div>
-                <div className="form-control mt-3">
+                <div className="form-control">
+                    <label className="label">
+                        <span className="label-text">Foto Confección</span>
+                    </label>
                     <input type="file" className="file-input file-input-bordered max-w-xs" onChange={handleFileChange2} required />
                 </div>
                 <div className='mx-auto md:col-start-2 mt-5 '>
                     <button onClick={handleSubmit} type="button" className="btn btn-outline btn-success">Crear Packaging</button>
                 </div>
             </form>
-
-
             <div className="overflow-x-auto">
                 <table className="table">
                     <thead>
